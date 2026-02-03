@@ -1,0 +1,33 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ユーザーの元画像
+    match /users/{userId}/originals/{imageId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) &&
+        request.resource.size < 10 * 1024 * 1024 && // 10MB制限
+        request.resource.contentType.matches('image/(jpeg|png)');
+    }
+
+    // デザイン画像
+    match /designs/{designId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Cloud Functionsからのみ
+    }
+
+    // 商品画像キャッシュ
+    match /products/cache/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Cloud Functionsからのみ
+    }
+  }
+}
