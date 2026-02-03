@@ -133,17 +133,31 @@ export async function generateInteriorDesign(
     await generatedImageFile.makePublic();
     const generatedImageUrl = generatedImageFile.publicUrl();
 
-    // 6. 事前選定した家具をそのまま使用（番号を付与）
-    // 注: 商品画像を直接AIに渡しているため、事後分析は不要
-    // 事前選定した商品が生成画像に反映されている前提
-    const finalFurniture = selectedFurniture.map((f, index) => ({
-      ...f,
-      itemNumber: index + 1, // 番号を付与（①②③に対応）
-    }));
-    const usedItemIds = finalFurniture.map((f) => f.productId);
-    console.log(`Using ${finalFurniture.length} pre-selected furniture items`);
+    // 6. 生成画像から家具の位置を検出
+    const furnitureAdapter = getFurnitureRecommendationAdapter();
+    let detectedPositions: Array<{ number: number; category: string; position: { x: number; y: number } }> = [];
+    try {
+      detectedPositions = await (furnitureAdapter as any).detectFurniturePositions(generatedImage.imageBuffer);
+      console.log(`Detected ${detectedPositions.length} furniture positions`);
+    } catch (error) {
+      console.warn("Position detection failed, using default positions:", error);
+    }
 
-    // 7. Firestoreを更新（完了ステータス + usedItemIds）
+    // 7. 事前選定した家具に位置情報を付与
+    const finalFurniture = selectedFurniture.map((f, index) => {
+      const itemNumber = index + 1;
+      // 検出された位置情報とマッチング（番号ベース）
+      const detectedPos = detectedPositions.find((p) => p.number === itemNumber);
+      return {
+        ...f,
+        itemNumber,
+        position: detectedPos?.position || null,
+      };
+    });
+    const usedItemIds = finalFurniture.map((f) => f.productId);
+    console.log(`Using ${finalFurniture.length} pre-selected furniture items with positions`);
+
+    // 8. Firestoreを更新（完了ステータス + usedItemIds）
     await designRef.update({
       generatedImageUrl,
       usedItemIds,
@@ -152,7 +166,7 @@ export async function generateInteriorDesign(
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    // 8. furnitureItemsサブコレクションに家具を保存
+    // 9. furnitureItemsサブコレクションに家具を保存（位置情報付き）
     if (finalFurniture.length > 0) {
       const batch = db.batch();
       for (const furniture of finalFurniture) {
@@ -167,6 +181,7 @@ export async function generateInteriorDesign(
           price: furniture.price,
           reason: furniture.reason,
           itemNumber: furniture.itemNumber || null,
+          position: furniture.position || null,
           source: "pre_selection",
           addedAt: admin.firestore.FieldValue.serverTimestamp(),
         });

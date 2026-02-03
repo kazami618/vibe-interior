@@ -199,6 +199,7 @@ ${preservedItemDescriptions.length > 0 ? preservedItemDescriptions.map(item => `
 7. The preserved items must look IDENTICAL to the original image
 8. Maintain the same room dimensions, perspective, and lighting direction
 9. **CRITICAL: The output image MUST have the EXACT same aspect ratio as the input room image**
+10. **CRITICAL: Only ONE ceiling light (pendant or ceiling fixture) per room - never add multiple ceiling lights**
 
 ## Style Guidelines for ${style}:
 ${this.getStyleGuidelines(options?.style || "modern")}
@@ -229,8 +230,7 @@ Do NOT create generic or different furniture. Copy the visual appearance of each
 2. Each furniture reference image shows the EXACT product to place
 3. Match the color, shape, and design of each reference image precisely
 4. Place each item in an appropriate location within the room
-5. Add a small circled number (①②③...) near each placed furniture item to identify it
-6. The numbers should correspond to the furniture list order above
+5. Do NOT add any numbers, labels, or text on the generated image - keep it clean and photorealistic
 `;
     }
 

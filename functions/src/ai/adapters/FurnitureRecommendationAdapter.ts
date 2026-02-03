@@ -45,6 +45,7 @@ export interface SelectedFurniture {
   price: number;
   reason: string; // 選定理由またはレビュー情報
   itemNumber?: number; // 画像内の番号（①②③など）
+  position?: { x: number; y: number }; // 画像内の位置（パーセンテージ 0-100）
 }
 
 /**

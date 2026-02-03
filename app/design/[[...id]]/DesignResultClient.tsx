@@ -42,6 +42,7 @@ interface FurnitureItem {
   price: number;
   reason: string;
   itemNumber?: number;
+  position?: { x: number; y: number };
 }
 
 export default function DesignResultClient() {
@@ -60,6 +61,7 @@ export default function DesignResultClient() {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [canShare, setCanShare] = useState(false);
+  const [highlightedItemNumber, setHighlightedItemNumber] = useState<number | null>(null);
 
   // Web Share API対応チェック
   useEffect(() => {
@@ -453,70 +455,95 @@ export default function DesignResultClient() {
               {[...furnitureItems]
                 .sort((a, b) => (a.itemNumber || 999) - (b.itemNumber || 999))
                 .map((item) => (
-                <a
+                <div
                   key={item.itemId}
-                  href={item.affiliateUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group"
+                  id={`furniture-item-${item.itemNumber}`}
+                  className={`transition-all duration-300 rounded-lg ${
+                    highlightedItemNumber === item.itemNumber
+                      ? 'ring-2 ring-primary ring-offset-2 ring-offset-background'
+                      : ''
+                  }`}
+                  onClick={() => setHighlightedItemNumber(
+                    highlightedItemNumber === item.itemNumber ? null : item.itemNumber ?? null
+                  )}
                 >
-                  <Card className="overflow-hidden transition-all hover:shadow-lg hover:border-primary/50">
-                    <div className="flex">
-                      {/* 商品画像 */}
-                      <div className="w-28 h-28 flex-shrink-0 bg-muted relative">
-                        {item.imageUrl ? (
-                          <img
-                            src={item.imageUrl}
-                            alt={item.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
-                            No Image
+                  <a
+                    href={item.affiliateUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group block"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Card className={`overflow-hidden transition-all hover:shadow-lg ${
+                      highlightedItemNumber === item.itemNumber
+                        ? 'border-primary shadow-lg'
+                        : 'hover:border-primary/50'
+                    }`}>
+                      <div className="flex">
+                        {/* 商品画像 */}
+                        <div className="w-28 h-28 flex-shrink-0 bg-muted relative">
+                          {item.imageUrl ? (
+                            <img
+                              src={item.imageUrl}
+                              alt={item.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+                              No Image
+                            </div>
+                          )}
+                          {/* アイテム番号バッジ（①②③形式） */}
+                          {item.itemNumber && (
+                            <div className={`absolute top-1 left-1 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center shadow-md transition-all ${
+                              highlightedItemNumber === item.itemNumber
+                                ? 'bg-primary text-primary-foreground scale-110'
+                                : 'bg-primary text-primary-foreground'
+                            }`}>
+                              {getCircledNumber(item.itemNumber)}
+                            </div>
+                          )}
+                        </div>
+                        {/* 商品情報 */}
+                        <div className="flex-1 p-3 flex flex-col justify-between">
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                              {item.itemNumber && (
+                                <span className={`inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-bold transition-all ${
+                                  highlightedItemNumber === item.itemNumber
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'bg-primary/10 text-primary'
+                                }`}>
+                                  {getCircledNumber(item.itemNumber)}
+                                </span>
+                              )}
+                              {item.category}
+                            </p>
+                            <h3 className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">
+                              {item.name}
+                            </h3>
                           </div>
-                        )}
-                        {/* アイテム番号バッジ（①②③形式） */}
-                        {item.itemNumber && (
-                          <div className="absolute top-1 left-1 w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shadow-md">
-                            {getCircledNumber(item.itemNumber)}
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="font-bold text-primary">
+                              ¥{item.price?.toLocaleString() || '-'}
+                            </span>
+                            <span className="text-xs text-muted-foreground flex items-center gap-1 group-hover:text-primary transition-colors">
+                              詳細を見る
+                              <ExternalLink className="h-3 w-3" />
+                            </span>
                           </div>
-                        )}
+                        </div>
                       </div>
-                      {/* 商品情報 */}
-                      <div className="flex-1 p-3 flex flex-col justify-between">
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                            {item.itemNumber && (
-                              <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
-                                {getCircledNumber(item.itemNumber)}
-                              </span>
-                            )}
-                            {item.category}
+                      {item.reason && (
+                        <div className="px-3 pb-3">
+                          <p className="text-xs text-amber-600 font-medium">
+                            {item.reason}
                           </p>
-                          <h3 className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">
-                            {item.name}
-                          </h3>
                         </div>
-                        <div className="flex items-center justify-between mt-2">
-                          <span className="font-bold text-primary">
-                            ¥{item.price?.toLocaleString() || '-'}
-                          </span>
-                          <span className="text-xs text-muted-foreground flex items-center gap-1 group-hover:text-primary transition-colors">
-                            詳細を見る
-                            <ExternalLink className="h-3 w-3" />
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    {item.reason && (
-                      <div className="px-3 pb-3">
-                        <p className="text-xs text-amber-600 font-medium">
-                          {item.reason}
-                        </p>
-                      </div>
-                    )}
-                  </Card>
-                </a>
+                      )}
+                    </Card>
+                  </a>
+                </div>
               ))}
             </div>
           </section>
@@ -545,11 +572,40 @@ export default function DesignResultClient() {
               <CardTitle className="text-base">AIデザイン</CardTitle>
             </CardHeader>
             <CardContent>
-              <img
-                src={design.generatedImageUrl}
-                alt="AIデザイン後"
-                className="w-full rounded-lg"
-              />
+              <div className="relative">
+                <img
+                  src={design.generatedImageUrl}
+                  alt="AIデザイン後"
+                  className="w-full rounded-lg"
+                />
+                {/* オーバーレイマーカー */}
+                {furnitureItems.map((item) =>
+                  item.position ? (
+                    <button
+                      key={item.itemId}
+                      className={`absolute w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-lg transform -translate-x-1/2 -translate-y-1/2 transition-all cursor-pointer hover:scale-125 ${
+                        highlightedItemNumber === item.itemNumber
+                          ? 'bg-primary text-primary-foreground ring-2 ring-white scale-125'
+                          : 'bg-white/90 text-gray-800 hover:bg-primary hover:text-primary-foreground'
+                      }`}
+                      style={{
+                        left: `${item.position.x}%`,
+                        top: `${item.position.y}%`,
+                      }}
+                      onClick={() => {
+                        setHighlightedItemNumber(
+                          highlightedItemNumber === item.itemNumber ? null : item.itemNumber ?? null
+                        );
+                        // リストまでスクロール
+                        const element = document.getElementById(`furniture-item-${item.itemNumber}`);
+                        element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }}
+                    >
+                      {getCircledNumber(item.itemNumber || 0)}
+                    </button>
+                  ) : null
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>

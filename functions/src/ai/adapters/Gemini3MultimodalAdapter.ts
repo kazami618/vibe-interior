@@ -171,6 +171,10 @@ export class Gemini3MultimodalAdapter implements FurnitureRecommendationAdapter 
 - バランスの取れたカテゴリの組み合わせ（照明、ラグ、小物など異なるカテゴリから選ぶ）
 - 実用性と見た目の両立
 
+## 重要な制約
+- 天井照明（シーリングライト、ペンダントライト）は1部屋に1つまでにしてください
+- フロアランプやテーブルランプは別途追加可能です
+
 ## 商品リスト
 ${JSON.stringify(productList, null, 2)}
 
@@ -336,11 +340,11 @@ ${JSON.stringify(productList, null, 2)}
   }
 
   /**
-   * 生成された画像から家具を検出
+   * 生成された画像から家具を検出（位置情報付き）
    */
   private async detectFurnitureInImage(
     image: Buffer
-  ): Promise<Array<{ number: number; category: string; description: string; color: string; style: string }>> {
+  ): Promise<Array<{ number: number; category: string; description: string; color: string; style: string; position?: { x: number; y: number } }>> {
     const model = this.genAI.getGenerativeModel({
       model: "gemini-2.0-flash",
     });
@@ -348,8 +352,8 @@ ${JSON.stringify(productList, null, 2)}
     const prompt = `この部屋の画像を分析して、配置されている家具・インテリアアイテムをすべてリストアップしてください。
 
 ## 重要
-画像内に①②③などの番号ラベルが付いているアイテムがある場合は、その番号も記録してください。
-番号がない場合は、左上から右下の順に1から番号を振ってください。
+左上から右下の順に1から番号を振ってください。
+各アイテムの位置を、画像の左上を(0,0)、右下を(100,100)とした相対座標（パーセンテージ）で記録してください。
 
 ## 検出対象
 - 照明器具（シーリングライト、ペンダントライト、フロアランプ、テーブルランプなど）
@@ -370,7 +374,8 @@ ${JSON.stringify(productList, null, 2)}
       "category": "照明",
       "description": "白いシェードの北欧風ペンダントライト",
       "color": "白",
-      "style": "北欧"
+      "style": "北欧",
+      "position": { "x": 50, "y": 15 }
     }
   ]
 }`;
@@ -482,6 +487,73 @@ ${JSON.stringify(productList, null, 2)}
 
   getModelName(): string {
     return this.modelName;
+  }
+
+  /**
+   * 生成された画像から家具の位置を検出（公開メソッド）
+   * @param image 生成された画像
+   * @returns 検出されたアイテムの位置情報
+   */
+  async detectFurniturePositions(
+    image: Buffer
+  ): Promise<Array<{ number: number; category: string; position: { x: number; y: number } }>> {
+    const model = this.genAI.getGenerativeModel({
+      model: "gemini-2.0-flash",
+    });
+
+    const prompt = `この部屋の画像を分析して、配置されている家具・インテリアアイテムの位置を特定してください。
+
+## 重要
+各アイテムの中心位置を、画像の左上を(0,0)、右下を(100,100)とした相対座標（パーセンテージ）で記録してください。
+左上から右下の順に1から番号を振ってください。
+
+## 検出対象
+- 照明器具（シーリングライト、ペンダントライト、フロアランプ、テーブルランプなど）
+- ラグ・カーペット
+- クッション・枕
+- 壁掛けアイテム（絵画、鏡、時計、アートなど）
+- 観葉植物・フェイクグリーン
+- 小型家具（サイドテーブル、スツール、シェルフなど）
+- カーテン・ブラインド
+
+## 出力形式
+以下のJSON形式で出力してください。JSONのみを出力し、他のテキストは含めないでください。
+{
+  "items": [
+    { "number": 1, "category": "照明", "position": { "x": 50, "y": 10 } },
+    { "number": 2, "category": "ラグ", "position": { "x": 50, "y": 80 } }
+  ]
+}`;
+
+    try {
+      const imageBase64 = image.toString("base64");
+      const result = await model.generateContent([
+        {
+          inlineData: {
+            mimeType: "image/jpeg",
+            data: imageBase64,
+          },
+        },
+        { text: prompt },
+      ]);
+
+      const responseText = result.response.text();
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        console.error("Failed to parse JSON from position detection:", responseText);
+        return [];
+      }
+
+      const parsed = JSON.parse(jsonMatch[0]);
+      return (parsed.items || []).map((item: any) => ({
+        number: item.number,
+        category: item.category,
+        position: item.position || { x: 50, y: 50 },
+      }));
+    } catch (error) {
+      console.error("Error detecting furniture positions:", error);
+      return [];
+    }
   }
 }
 
