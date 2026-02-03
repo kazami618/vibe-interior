@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AuthProvider } from "@/lib/auth";
+import { Header } from "@/components/layout/Header";
 
 export const metadata: Metadata = {
   title: "Vibe Interior - AIインテリアコーディネーター",
@@ -12,9 +14,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja" className="dark">
+    <html lang="ja">
       <body className="antialiased">
-        {children}
+        <AuthProvider>
+          <Header />
+          <main>{children}</main>
+        </AuthProvider>
       </body>
     </html>
   );

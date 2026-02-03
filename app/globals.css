@@ -1,59 +1,92 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    /* Light Mode - Warm Interior Theme */
+    --background: 40 33% 98%;          /* Warm off-white */
+    --foreground: 30 10% 15%;          /* Dark brown */
+    --card: 0 0% 100%;                 /* Pure white */
+    --card-foreground: 30 10% 15%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --radius: 0.5rem;
+    --popover-foreground: 30 10% 15%;
+    --primary: 28 60% 45%;             /* Warm brown/terracotta */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 40 30% 94%;           /* Light beige */
+    --secondary-foreground: 30 10% 25%;
+    --muted: 40 20% 92%;               /* Muted beige */
+    --muted-foreground: 30 10% 45%;
+    --accent: 35 45% 88%;              /* Light wood tone */
+    --accent-foreground: 30 10% 20%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 35 20% 88%;              /* Warm border */
+    --input: 35 20% 88%;
+    --ring: 28 60% 45%;
+    --radius: 0.75rem;
+
+    /* Custom colors for interior app */
+    --wood: 30 40% 35%;
+    --wood-light: 35 30% 75%;
+    --cream: 45 40% 96%;
+    --sage: 120 15% 75%;
   }
 
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
+    --background: 30 15% 8%;
+    --foreground: 40 20% 95%;
+    --card: 30 15% 12%;
+    --card-foreground: 40 20% 95%;
+    --popover: 30 15% 12%;
+    --popover-foreground: 40 20% 95%;
+    --primary: 35 50% 55%;
+    --primary-foreground: 30 15% 8%;
+    --secondary: 30 15% 18%;
+    --secondary-foreground: 40 20% 95%;
+    --muted: 30 15% 18%;
+    --muted-foreground: 40 15% 60%;
+    --accent: 30 15% 18%;
+    --accent-foreground: 40 20% 95%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
+    --destructive-foreground: 40 20% 95%;
+    --border: 30 15% 20%;
+    --input: 30 15% 20%;
+    --ring: 35 50% 55%;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
+/* Custom utility classes */
+@layer utilities {
+  .bg-wood {
+    background-color: hsl(var(--wood));
   }
-  body {
-    @apply bg-background text-foreground;
+
+  .bg-wood-light {
+    background-color: hsl(var(--wood-light));
+  }
+
+  .bg-cream {
+    background-color: hsl(var(--cream));
+  }
+
+  .text-wood {
+    color: hsl(var(--wood));
+  }
+
+  .gradient-warm {
+    background: linear-gradient(135deg, hsl(40 33% 98%) 0%, hsl(35 30% 94%) 100%);
+  }
+
+  .gradient-wood {
+    background: linear-gradient(180deg, hsl(35 30% 94%) 0%, hsl(40 33% 98%) 100%);
   }
 }

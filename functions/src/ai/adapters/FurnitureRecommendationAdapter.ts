@@ -24,6 +24,48 @@ export interface DetectedFurniture {
 }
 
 /**
+ * 家具選定リクエスト
+ */
+export interface FurnitureSelectionRequest {
+  roomImage: Buffer;
+  style: string;
+  targetItems: string[];
+  maxItems?: number; // デフォルト4
+}
+
+/**
+ * 選定された家具
+ */
+export interface SelectedFurniture {
+  productId: string;
+  name: string;
+  category: string;
+  imageUrl: string;
+  affiliateUrl: string;
+  price: number;
+  reason: string; // 選定理由またはレビュー情報
+  itemNumber?: number; // 画像内の番号（①②③など）
+}
+
+/**
+ * 画像内で検出された家具アイテム
+ */
+export interface DetectedItemInImage {
+  category: string;
+  description: string;
+  style: string;
+  color: string;
+}
+
+/**
+ * 画像分析リクエスト
+ */
+export interface ImageAnalysisRequest {
+  generatedImage: Buffer;
+  style: string;
+}
+
+/**
  * 家具推薦アダプターのインターフェース
  */
 export interface FurnitureRecommendationAdapter {
@@ -44,6 +86,24 @@ export interface FurnitureRecommendationAdapter {
     detectedFurniture: DetectedFurniture[],
     catalogEmbeddings?: number[][]
   ): Promise<FurnitureRecommendation[]>;
+
+  /**
+   * 部屋画像とスタイルに基づいて最適な家具を選定（RAG）
+   * @param request 家具選定リクエスト
+   * @returns 選定された家具リスト
+   */
+  selectFurnitureForRoom(
+    request: FurnitureSelectionRequest
+  ): Promise<SelectedFurniture[]>;
+
+  /**
+   * 生成された画像を分析して家具を検出し、カタログから類似商品を検索
+   * @param request 画像分析リクエスト
+   * @returns マッチした商品リスト
+   */
+  analyzeGeneratedImageAndMatchProducts(
+    request: ImageAnalysisRequest
+  ): Promise<SelectedFurniture[]>;
 
   /**
    * モデル名を取得

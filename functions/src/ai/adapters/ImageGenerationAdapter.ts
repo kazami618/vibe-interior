@@ -4,15 +4,19 @@
  */
 
 export interface FurnitureReference {
+  productId: string;
   name: string;
   imageUrl: string;
   category: string;
+  affiliateUrl?: string;
 }
 
 export interface GenerationOptions {
   style?: string; // "modern", "scandinavian", "traditional"など
   roomType?: string; // "living_room", "bedroom", "kitchen"など
   furnitureCount?: number; // 配置する家具の数
+  targetItems?: string[]; // 変更・追加したいアイテム
+  preservedItems?: string[]; // 維持したいアイテム
 }
 
 export interface GeneratedImage {
