@@ -2,27 +2,32 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 
 import { useAuth } from '@/lib/auth';
 import { useImageUpload } from '@/lib/hooks/useImageUpload';
 import { useDesignGeneration } from '@/lib/hooks/useDesignGeneration';
-import type { DesignStyle, TargetItem, PreservedItem } from '@/lib/types/design';
-import {
-  TARGET_ITEMS,
-  PRESERVED_ITEMS,
-  DEFAULT_TARGET_ITEMS,
-  DEFAULT_PRESERVED_ITEMS,
+import type {
+  DesignStyle,
+  Scenario,
+  RoomType,
+  ItemCategory,
 } from '@/lib/types/design';
+import { DEFAULT_ITEMS_BY_SCENARIO, getDefaultItemsForRoom } from '@/lib/types/design';
 
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ImageUploader } from '@/components/features/design/ImageUploader';
 import { StyleSelector } from '@/components/features/design/StyleSelector';
-import { ItemSelector } from '@/components/features/design/ItemSelector';
 import { GenerateButton } from '@/components/features/design/GenerateButton';
 import { GenerationProgress } from '@/components/features/design/GenerationProgress';
+import { StepIndicator } from '@/components/features/design/StepIndicator';
+import { ScenarioSelector } from '@/components/features/design/ScenarioSelector';
+import { RoomTypeSelector } from '@/components/features/design/RoomTypeSelector';
+import { ItemCategorySelector } from '@/components/features/design/ItemCategorySelector';
+
+const STEPS = ['シナリオ', '画像', '部屋', 'スタイル', 'アイテム', '確認'];
 
 export default function DesignNewPage() {
   const router = useRouter();
@@ -38,10 +43,25 @@ export default function DesignNewPage() {
   } = useImageUpload();
   const { generating, error: generateError, generate } = useDesignGeneration();
 
+  // Step management
+  const [currentStep, setCurrentStep] = useState(0);
+
+  // Form state
+  const [scenario, setScenario] = useState<Scenario | null>(null);
+  const [roomType, setRoomType] = useState<RoomType | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<DesignStyle>('modern');
-  const [targetItems, setTargetItems] = useState<TargetItem[]>(DEFAULT_TARGET_ITEMS);
-  const [preservedItems, setPreservedItems] = useState<PreservedItem[]>(DEFAULT_PRESERVED_ITEMS);
+  const [addItems, setAddItems] = useState<ItemCategory[]>([]);
+  const [keepItems, setKeepItems] = useState<ItemCategory[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // シナリオと部屋タイプに基づいてデフォルトアイテムを設定
+  useEffect(() => {
+    if (scenario) {
+      const defaults = getDefaultItemsForRoom(roomType, scenario);
+      setAddItems(defaults.add);
+      setKeepItems(defaults.keep);
+    }
+  }, [scenario, roomType]);
 
   // 未ログインの場合はリダイレクト
   useEffect(() => {
@@ -67,7 +87,7 @@ export default function DesignNewPage() {
   }
 
   const handleGenerate = async () => {
-    if (!file) return;
+    if (!file || !scenario || !roomType) return;
 
     setIsProcessing(true);
 
@@ -83,9 +103,20 @@ export default function DesignNewPage() {
         return;
       }
 
-      // 2. デザイン生成
+      // 2. デザイン生成（新しいパラメータを含める）
       console.log('Starting generation...');
-      const generateResult = await generate(selectedStyle, uploadResult.path, targetItems, preservedItems);
+      const generateResult = await generate(
+        selectedStyle,
+        uploadResult.path,
+        [], // targetItems (legacy) - 空配列
+        [], // preservedItems (legacy) - 空配列
+        {
+          scenario,
+          roomType,
+          addItems,
+          keepItems,
+        }
+      );
       console.log('Generation result:', generateResult);
 
       if (!generateResult) {
@@ -99,6 +130,35 @@ export default function DesignNewPage() {
     } catch (error) {
       console.error('Error generating design:', error);
       setIsProcessing(false);
+    }
+  };
+
+  const canProceedToNextStep = (): boolean => {
+    switch (currentStep) {
+      case 0: // シナリオ
+        return scenario !== null;
+      case 1: // 画像
+        return file !== null;
+      case 2: // 部屋タイプ
+        return roomType !== null;
+      case 3: // スタイル
+        return selectedStyle !== null;
+      case 4: // アイテム
+        return addItems.length > 0;
+      default:
+        return true;
+    }
+  };
+
+  const handleNext = () => {
+    if (currentStep < STEPS.length - 1 && canProceedToNextStep()) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
     }
   };
 
@@ -122,6 +182,174 @@ export default function DesignNewPage() {
     );
   }
 
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 0: // シナリオ選択
+        return (
+          <ScenarioSelector
+            value={scenario}
+            onChange={setScenario}
+            disabled={isDisabled}
+          />
+        );
+
+      case 1: // 画像アップロード
+        return (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-lg font-semibold">部屋の画像</h2>
+              <p className="text-sm text-muted-foreground">
+                コーディネートしたい部屋の画像をアップロードしてください
+              </p>
+            </div>
+            <ImageUploader
+              previewUrl={previewUrl}
+              error={null}
+              onFileSelect={selectFile}
+              onClear={clearFile}
+              disabled={isDisabled}
+            />
+          </div>
+        );
+
+      case 2: // 部屋タイプ選択
+        return (
+          <RoomTypeSelector
+            value={roomType}
+            onChange={setRoomType}
+            disabled={isDisabled}
+          />
+        );
+
+      case 3: // スタイル選択
+        return (
+          <StyleSelector
+            value={selectedStyle}
+            onChange={setSelectedStyle}
+            disabled={isDisabled}
+          />
+        );
+
+      case 4: // アイテム選択
+        const defaults = getDefaultItemsForRoom(roomType, scenario);
+        return (
+          <div className="space-y-6">
+            <ItemCategorySelector
+              title={scenario === 'redecorate' ? '追加したいアイテム' : '購入したいアイテム'}
+              description={
+                scenario === 'redecorate'
+                  ? 'お部屋に追加したいアイテムを選択してください'
+                  : '新居に置きたいアイテムを選択してください'
+              }
+              selectedItems={addItems}
+              onSelectedItemsChange={setAddItems}
+              disabled={isDisabled}
+              defaultItems={defaults.add}
+            />
+            {scenario === 'redecorate' && (
+              <ItemCategorySelector
+                title="残したいアイテム"
+                description="そのまま使い続けたいアイテムを選択してください"
+                selectedItems={keepItems}
+                onSelectedItemsChange={setKeepItems}
+                disabled={isDisabled}
+                defaultItems={defaults.keep}
+              />
+            )}
+          </div>
+        );
+
+      case 5: // 確認・生成
+        return (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-lg font-semibold">設定内容の確認</h2>
+              <p className="text-sm text-muted-foreground">
+                以下の内容でデザインを生成します
+              </p>
+            </div>
+
+            <div className="space-y-4 bg-muted/50 rounded-lg p-4">
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">シナリオ</span>
+                <span className="font-medium">
+                  {scenario === 'redecorate' ? '模様替え' : '引越し・新生活'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">部屋タイプ</span>
+                <span className="font-medium">
+                  {roomType === 'living' && 'リビング'}
+                  {roomType === 'dining' && 'ダイニング'}
+                  {roomType === 'bedroom' && '寝室'}
+                  {roomType === 'one_room' && 'ワンルーム'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">スタイル</span>
+                <span className="font-medium">
+                  {selectedStyle === 'scandinavian' && '北欧'}
+                  {selectedStyle === 'modern' && 'モダン'}
+                  {selectedStyle === 'vintage' && 'ヴィンテージ'}
+                  {selectedStyle === 'industrial' && 'インダストリアル'}
+                </span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">
+                  {scenario === 'redecorate' ? '追加アイテム' : '購入アイテム'}
+                </span>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {addItems.map((item) => (
+                    <span
+                      key={item}
+                      className="px-2 py-0.5 text-xs bg-primary/20 text-primary rounded-full"
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              {scenario === 'redecorate' && keepItems.length > 0 && (
+                <div>
+                  <span className="text-muted-foreground">残すアイテム</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {keepItems.map((item) => (
+                      <span
+                        key={item}
+                        className="px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded-full"
+                      >
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {previewUrl && (
+                <div>
+                  <span className="text-muted-foreground">アップロード画像</span>
+                  <img
+                    src={previewUrl}
+                    alt="アップロード画像"
+                    className="mt-2 rounded-lg max-h-40 object-cover"
+                  />
+                </div>
+              )}
+            </div>
+
+            <GenerateButton
+              onClick={handleGenerate}
+              disabled={!file || isDisabled}
+              loading={isProcessing}
+              ticketBalance={userData?.ticketBalance ?? 0}
+            />
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-2xl mx-auto space-y-6">
@@ -140,6 +368,9 @@ export default function DesignNewPage() {
           </div>
         </div>
 
+        {/* ステップインジケーター */}
+        <StepIndicator steps={STEPS} currentStep={currentStep} />
+
         {/* エラー表示 */}
         {error && (
           <Alert variant="destructive">
@@ -148,52 +379,45 @@ export default function DesignNewPage() {
           </Alert>
         )}
 
-        {/* 画像アップロード */}
-        <div>
-          <h2 className="text-lg font-semibold mb-3">部屋の画像</h2>
-          <ImageUploader
-            previewUrl={previewUrl}
-            error={null}
-            onFileSelect={selectFile}
-            onClear={clearFile}
-            disabled={isDisabled}
-          />
-        </div>
+        {/* ステップコンテンツ */}
+        <div className="min-h-[300px]">{renderStepContent()}</div>
 
-        {/* スタイル選択 */}
-        <StyleSelector
-          value={selectedStyle}
-          onChange={setSelectedStyle}
-          disabled={isDisabled}
-        />
+        {/* ナビゲーションボタン */}
+        {currentStep < STEPS.length - 1 && (
+          <div className="flex justify-between pt-6 border-t border-border">
+            <Button
+              variant="ghost"
+              onClick={handleBack}
+              disabled={currentStep === 0 || isDisabled}
+              className="text-muted-foreground"
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              戻る
+            </Button>
+            <Button
+              onClick={handleNext}
+              disabled={!canProceedToNextStep() || isDisabled}
+              className={
+                canProceedToNextStep() && !isDisabled
+                  ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/30 px-8'
+                  : ''
+              }
+            >
+              次へ
+              <ArrowRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        )}
 
-        {/* 変更・追加したいアイテム */}
-        <ItemSelector
-          title="変更・追加したいアイテム"
-          description="AIが変更または追加するアイテムを選択してください"
-          options={TARGET_ITEMS}
-          selectedItems={targetItems}
-          onSelectedItemsChange={(items) => setTargetItems(items as TargetItem[])}
-          disabled={isDisabled}
-        />
-
-        {/* 維持したいアイテム */}
-        <ItemSelector
-          title="維持したいアイテム"
-          description="賃貸物件の場合、壁や床などは変更できないため維持する項目を選択してください"
-          options={PRESERVED_ITEMS}
-          selectedItems={preservedItems}
-          onSelectedItemsChange={(items) => setPreservedItems(items as PreservedItem[])}
-          disabled={isDisabled}
-        />
-
-        {/* 生成ボタン */}
-        <GenerateButton
-          onClick={handleGenerate}
-          disabled={!file || isDisabled}
-          loading={isProcessing}
-          ticketBalance={userData?.ticketBalance ?? 0}
-        />
+        {/* 最終ステップでは戻るボタンのみ */}
+        {currentStep === STEPS.length - 1 && (
+          <div className="flex justify-start pt-6 border-t border-border">
+            <Button variant="ghost" onClick={handleBack} disabled={isDisabled} className="text-muted-foreground">
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              戻る
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
