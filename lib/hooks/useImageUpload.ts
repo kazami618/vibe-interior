@@ -15,6 +15,7 @@ interface UseImageUploadReturn {
   selectFile: (file: File) => void;
   uploadFile: () => Promise<{ path: string; url: string } | null>;
   clearFile: () => void;
+  restoreFromDataUrl: (dataUrl: string) => void;
 }
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -84,7 +85,7 @@ export function useImageUpload(): UseImageUploadReturn {
   }, [file, user]);
 
   const clearFile = useCallback(() => {
-    if (previewUrl) {
+    if (previewUrl && previewUrl.startsWith('blob:')) {
       URL.revokeObjectURL(previewUrl);
     }
     setFile(null);
@@ -93,6 +94,33 @@ export function useImageUpload(): UseImageUploadReturn {
     setUploadedUrl(null);
     setError(null);
   }, [previewUrl]);
+
+  // Base64 data URLからファイルを復元
+  const restoreFromDataUrl = useCallback((dataUrl: string) => {
+    if (!dataUrl || !dataUrl.startsWith('data:')) return;
+
+    try {
+      // data URLをBlobに変換
+      const arr = dataUrl.split(',');
+      const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      const blob = new Blob([u8arr], { type: mime });
+      const extension = mime.split('/')[1] || 'jpg';
+      const restoredFile = new File([blob], `restored.${extension}`, { type: mime });
+
+      setFile(restoredFile);
+      setPreviewUrl(dataUrl);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to restore image from data URL:', err);
+      setError('画像の復元に失敗しました。再度アップロードしてください。');
+    }
+  }, []);
 
   return {
     file,
@@ -104,5 +132,6 @@ export function useImageUpload(): UseImageUploadReturn {
     selectFile,
     uploadFile,
     clearFile,
+    restoreFromDataUrl,
   };
 }

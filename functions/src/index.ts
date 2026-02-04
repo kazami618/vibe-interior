@@ -44,3 +44,7 @@ export const onUserCreated = auth.user().onCreate(async (user) => {
 
 // AI画像生成関数
 export { generateRoomDesign } from "./callable/generateRoomDesign";
+
+// Stripe決済関数
+export { stripeCheckout } from "./stripe/checkout";
+export { stripeVerifySession } from "./stripe/verifySession";

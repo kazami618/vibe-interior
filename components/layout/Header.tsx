@@ -40,13 +40,18 @@ export function Header() {
                 </Link>
               </Button>
 
-              {/* チケット残高 */}
-              <div className="flex items-center space-x-1.5 px-3 py-1.5 bg-secondary rounded-full">
+              {/* チケット残高（クリックで購入ページへ） */}
+              <Link
+                href="/purchase"
+                className="flex items-center space-x-1.5 px-3 py-1.5 bg-secondary rounded-full hover:bg-secondary/80 transition-colors"
+                title="チケットを購入"
+              >
                 <Ticket className="h-4 w-4 text-primary" />
                 <span className="text-sm font-medium">
                   {userData.ticketBalance}
                 </span>
-              </div>
+                <Plus className="h-3 w-3 text-muted-foreground" />
+              </Link>
 
               {/* マイページボタン */}
               <Button asChild variant="ghost" size="sm" className="hidden sm:flex">
@@ -88,6 +93,12 @@ export function Header() {
                       <Link href="/design/new" className="cursor-pointer flex items-center">
                         <Plus className="h-4 w-4 mr-2" />
                         新規作成
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/purchase" className="cursor-pointer flex items-center">
+                        <Ticket className="h-4 w-4 mr-2" />
+                        チケット購入
                       </Link>
                     </DropdownMenuItem>
                   </div>

@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useEffect, useState, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
-import { Plus, Image as ImageIcon, Calendar } from 'lucide-react';
+import { Plus, Image as ImageIcon, Calendar, Ticket, Sparkles, ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 import { useAuth } from '@/lib/auth';
 import { db } from '@/lib/firebase';
@@ -23,12 +24,84 @@ interface DesignItem {
   createdAt: Date | null;
 }
 
-export default function MyPage() {
+function MyPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, userData, loading: authLoading } = useAuth();
 
   const [designs, setDesigns] = useState<DesignItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [ticketAnimation, setTicketAnimation] = useState(false);
+  const [displayedBalance, setDisplayedBalance] = useState<number | null>(null);
+  const toastShownRef = useRef(false);
+  const animationStartedRef = useRef(false);
+  const purchasedQuantityRef = useRef<number>(0);
+
+  // 購入成功の処理
+  useEffect(() => {
+    const purchaseSuccess = searchParams.get('purchase_success');
+    const quantity = searchParams.get('quantity');
+
+    if (purchaseSuccess === 'true' && !toastShownRef.current) {
+      toastShownRef.current = true;
+      // 購入数量を保存（URLから消える前に）
+      purchasedQuantityRef.current = parseInt(quantity || '1', 10);
+
+      // URLからクエリパラメータを削除
+      router.replace('/mypage', { scroll: false });
+
+      // 少し遅延させてトーストを表示
+      setTimeout(() => {
+        const message = quantity
+          ? `${quantity}枚のチケット購入が完了しました。購入ありがとうございます 😊`
+          : 'チケット購入が完了しました。購入ありがとうございます 😊';
+
+        toast.success(message, {
+          duration: 5000,
+          icon: <Ticket className="w-5 h-5" />,
+        });
+
+        // チケット残高のアニメーションを開始
+        setTicketAnimation(true);
+      }, 500);
+    }
+  }, [searchParams, router]);
+
+  // チケット残高のカウントアップアニメーション
+  useEffect(() => {
+    // アニメーションが既に開始されている場合はスキップ
+    if (!ticketAnimation || animationStartedRef.current) return;
+    // userDataがロードされるまで待つ
+    if (userData?.ticketBalance === undefined) return;
+
+    animationStartedRef.current = true;
+
+    const quantity = purchasedQuantityRef.current;
+    const targetBalance = userData.ticketBalance;
+    const startBalance = Math.max(0, targetBalance - quantity);
+
+    // カウントアップアニメーション（ゆっくり、目立つように）
+    let current = startBalance;
+    setDisplayedBalance(current);
+
+    // 数字を1ずつ増やす（より分かりやすく）
+    const interval = setInterval(() => {
+      current = current + 1;
+      setDisplayedBalance(current);
+
+      if (current >= targetBalance) {
+        clearInterval(interval);
+        // アニメーション完了後も少し残す
+        setTimeout(() => {
+          setTicketAnimation(false);
+          setDisplayedBalance(null); // リセット
+          animationStartedRef.current = false;
+        }, 2000);
+      }
+    }, 150); // ゆっくりカウントアップ
+
+    return () => clearInterval(interval);
+  }, [ticketAnimation, userData?.ticketBalance]);
 
   // 認証チェック
   useEffect(() => {
@@ -94,6 +167,9 @@ export default function MyPage() {
   const completedDesigns = designs.filter((d) => d.status === 'completed');
   const processingDesigns = designs.filter((d) => d.status === 'processing');
 
+  // 表示するチケット残高（アニメーション中はdisplayedBalance、それ以外はuserDataから）
+  const shownBalance = displayedBalance !== null ? displayedBalance : (userData?.ticketBalance || 0);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -121,10 +197,57 @@ export default function MyPage() {
               <p className="text-2xl font-bold">{completedDesigns.length}</p>
             </CardContent>
           </Card>
-          <Card className="bg-secondary/30">
+          <Card className={`relative overflow-hidden transition-all duration-500 ${
+            ticketAnimation
+              ? 'ring-4 ring-green-500 bg-gradient-to-br from-green-500/20 to-emerald-500/20 shadow-lg shadow-green-500/30'
+              : 'bg-secondary/30 hover:bg-secondary/50'
+          }`}>
             <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground">チケット残高</p>
-              <p className="text-2xl font-bold">{userData?.ticketBalance || 0}</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <Ticket className={`w-4 h-4 transition-all duration-300 ${ticketAnimation ? 'text-green-500 animate-bounce' : ''}`} />
+                    チケット残高
+                  </p>
+                  <div className="flex items-baseline gap-2">
+                    <p className={`text-3xl font-bold transition-all duration-300 ${
+                      ticketAnimation ? 'text-green-500 scale-125 animate-pulse' : ''
+                    }`}>
+                      {shownBalance}
+                    </p>
+                    <span className="text-sm text-muted-foreground">枚</span>
+                  </div>
+                </div>
+                <Link href="/purchase">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={`transition-all ${
+                      ticketAnimation
+                        ? 'border-green-500 text-green-500 hover:bg-green-500/10'
+                        : 'hover:bg-primary/10'
+                    }`}
+                  >
+                    <ShoppingCart className="w-4 h-4 mr-1" />
+                    購入
+                  </Button>
+                </Link>
+              </div>
+              {/* アニメーション中のキラキラエフェクト */}
+              {ticketAnimation && (
+                <>
+                  <div className="absolute top-1 right-1">
+                    <Sparkles className="w-5 h-5 text-yellow-400 animate-ping" />
+                  </div>
+                  <div className="absolute bottom-1 left-1">
+                    <Sparkles className="w-4 h-4 text-green-400 animate-ping" style={{ animationDelay: '0.2s' }} />
+                  </div>
+                  <div className="absolute top-1/2 right-8">
+                    <Sparkles className="w-3 h-3 text-emerald-400 animate-ping" style={{ animationDelay: '0.4s' }} />
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-green-500/0 via-green-500/10 to-green-500/0 animate-pulse" />
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -210,5 +333,26 @@ export default function MyPage() {
         </section>
       </div>
     </div>
+  );
+}
+
+export default function MyPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-6xl mx-auto">
+            <Skeleton className="h-10 w-48 mb-8" />
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {[...Array(8)].map((_, i) => (
+                <Skeleton key={i} className="aspect-square rounded-lg" />
+              ))}
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <MyPageContent />
+    </Suspense>
   );
 }

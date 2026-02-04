@@ -108,7 +108,7 @@ export default function HomePage() {
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative overflow-hidden gradient-warm">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5" />
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5 pointer-events-none" />
         <div className="container mx-auto px-4 py-16 md:py-24 relative">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* 左側：テキスト */}
@@ -213,7 +213,7 @@ export default function HomePage() {
           </div>
         </div>
         {/* 装飾的な要素 */}
-        <div className="absolute -bottom-px left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent" />
+        <div className="absolute -bottom-px left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent pointer-events-none" />
       </section>
 
       {/* How it Works Section */}
@@ -426,7 +426,7 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 bg-background border-t">
+      <footer className="py-8 bg-background border-t relative z-10">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
@@ -435,9 +435,18 @@ export default function HomePage() {
               </div>
               <span className="font-semibold">部屋づくりAI</span>
             </div>
-            <p className="text-sm text-muted-foreground">
-              © 2026 部屋づくりAI (room-setup.com). All rights reserved.
-            </p>
+            <div className="flex items-center gap-4">
+              <a
+                href="/legal/tokushoho"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                特定商取引法に基づく表記
+              </a>
+              <span className="text-muted-foreground/50">|</span>
+              <p className="text-sm text-muted-foreground">
+                © 2026 部屋づくりAI
+              </p>
+            </div>
           </div>
         </div>
       </footer>

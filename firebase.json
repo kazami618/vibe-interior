@@ -32,6 +32,22 @@
         "destination": "/mypage.html"
       },
       {
+        "source": "/purchase",
+        "destination": "/purchase.html"
+      },
+      {
+        "source": "/purchase/success",
+        "destination": "/purchase/success.html"
+      },
+      {
+        "source": "/purchase/cancel",
+        "destination": "/purchase/cancel.html"
+      },
+      {
+        "source": "/legal/tokushoho",
+        "destination": "/legal/tokushoho.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

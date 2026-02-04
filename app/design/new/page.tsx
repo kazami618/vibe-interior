@@ -1,20 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { ArrowLeft, ArrowRight, ChevronLeft } from 'lucide-react';
+import { useState, useEffect, useRef, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ArrowLeft, ArrowRight, ChevronLeft, Ticket } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 import { useAuth } from '@/lib/auth';
 import { useImageUpload } from '@/lib/hooks/useImageUpload';
 import { useDesignGeneration } from '@/lib/hooks/useDesignGeneration';
+import { loadDesignState, clearDesignState } from '@/lib/designState';
 import type {
   DesignStyle,
   Scenario,
   RoomType,
   ItemCategory,
 } from '@/lib/types/design';
-import { DEFAULT_ITEMS_BY_SCENARIO, getDefaultItemsForRoom } from '@/lib/types/design';
+import { getDefaultItemsForRoom } from '@/lib/types/design';
 
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -29,8 +31,9 @@ import { ItemCategorySelector } from '@/components/features/design/ItemCategoryS
 
 const STEPS = ['シナリオ', '画像', '部屋', 'スタイル', 'アイテム', '確認'];
 
-export default function DesignNewPage() {
+function DesignNewContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, userData, loading: authLoading } = useAuth();
   const {
     file,
@@ -40,6 +43,7 @@ export default function DesignNewPage() {
     selectFile,
     uploadFile,
     clearFile,
+    restoreFromDataUrl,
   } = useImageUpload();
   const { generating, error: generateError, generate } = useDesignGeneration();
 
@@ -54,9 +58,60 @@ export default function DesignNewPage() {
   const [keepItems, setKeepItems] = useState<ItemCategory[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // シナリオと部屋タイプに基づいてデフォルトアイテムを設定
+  const stateRestoredRef = useRef(false);
+  const toastShownRef = useRef(false);
+
+  // 購入後の状態復元と成功トースト
   useEffect(() => {
-    if (scenario) {
+    const restore = searchParams.get('restore');
+    const purchaseSuccess = searchParams.get('purchase_success');
+    const quantity = searchParams.get('quantity');
+
+    // 状態を復元（一度だけ）
+    if (restore === 'true' && !stateRestoredRef.current) {
+      stateRestoredRef.current = true;
+      const savedState = loadDesignState();
+
+      if (savedState) {
+        setScenario(savedState.scenario);
+        setRoomType(savedState.roomType);
+        setSelectedStyle(savedState.selectedStyle);
+        setAddItems(savedState.addItems);
+        setKeepItems(savedState.keepItems);
+        // 画像をdata URLから復元
+        if (savedState.previewUrl) {
+          restoreFromDataUrl(savedState.previewUrl);
+        }
+        // 確認ステップに直接移動
+        setCurrentStep(5);
+        // 保存データをクリア
+        clearDesignState();
+      }
+    }
+
+    // 購入成功トースト（一度だけ）
+    if (purchaseSuccess === 'true' && !toastShownRef.current) {
+      toastShownRef.current = true;
+
+      // URLからクエリパラメータを削除
+      router.replace('/design/new', { scroll: false });
+
+      setTimeout(() => {
+        const message = quantity
+          ? `${quantity}枚のチケット購入が完了しました！`
+          : 'チケット購入が完了しました！';
+        toast.success(message, {
+          duration: 4000,
+          icon: <Ticket className="w-5 h-5" />,
+          description: 'デザインを生成できます',
+        });
+      }, 300);
+    }
+  }, [searchParams, router, restoreFromDataUrl]);
+
+  // シナリオと部屋タイプに基づいてデフォルトアイテムを設定（復元時はスキップ）
+  useEffect(() => {
+    if (scenario && !stateRestoredRef.current) {
       const defaults = getDefaultItemsForRoom(roomType, scenario);
       setAddItems(defaults.add);
       setKeepItems(defaults.keep);
@@ -341,6 +396,14 @@ export default function DesignNewPage() {
               disabled={!file || isDisabled}
               loading={isProcessing}
               ticketBalance={userData?.ticketBalance ?? 0}
+              designState={{
+                scenario,
+                roomType,
+                selectedStyle,
+                addItems,
+                keepItems,
+                previewUrl,
+              }}
             />
           </div>
         );
@@ -420,5 +483,21 @@ export default function DesignNewPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function DesignNewPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-2xl mx-auto">
+            <GenerationProgress message="読み込み中..." />
+          </div>
+        </div>
+      }
+    >
+      <DesignNewContent />
+    </Suspense>
   );
 }

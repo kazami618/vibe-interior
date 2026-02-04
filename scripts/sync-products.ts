@@ -129,6 +129,7 @@ async function fetchProductsFromSheet(doc: GoogleSpreadsheet): Promise<Product[]
 
       const product: Product = {
         id: Buffer.from(affiliateLink).toString('base64').replace(/[^a-zA-Z0-9]/g, ''), // URLをBase64エンコードしてIDに変換
+        source: 'rakuten',
         name: productName,
         price: parseFloat(row.get('price') as string) || 0,
         imageUrl: row.get('imageUrl') as string || '',
@@ -136,6 +137,8 @@ async function fetchProductsFromSheet(doc: GoogleSpreadsheet): Promise<Product[]
         category: category,
         tags: tagArray,
         vibe: row.get('vibe') as string || '',
+        reviewAverage: reviewAverage,
+        reviewCount: reviewCount,
         updatedAt: new Date(),
       };
 

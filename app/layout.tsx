@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth";
 import { Header } from "@/components/layout/Header";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "部屋づくりAI - AIインテリアコーディネーター",
@@ -26,6 +27,7 @@ export default function RootLayout({
         <AuthProvider>
           <Header />
           <main>{children}</main>
+          <Toaster position="top-center" richColors />
         </AuthProvider>
       </body>
     </html>

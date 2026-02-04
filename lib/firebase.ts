@@ -16,6 +16,9 @@ const firebaseConfig = {
 // Firebase初期化（既に初期化されている場合は再利用）
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
+// Firebase App (named export for imports)
+export { app };
+
 // Firebase サービス
 export const auth = getAuth(app);
 export const db = getFirestore(app);
