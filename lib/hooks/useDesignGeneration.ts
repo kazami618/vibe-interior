@@ -7,9 +7,19 @@ import type {
   DesignStyle,
   TargetItem,
   PreservedItem,
+  Scenario,
+  RoomType,
+  ItemCategory,
   GenerateRoomDesignRequest,
   GenerateRoomDesignResponse,
 } from '@/lib/types/design';
+
+interface ScenarioOptions {
+  scenario: Scenario;
+  roomType: RoomType;
+  addItems: ItemCategory[];
+  keepItems: ItemCategory[];
+}
 
 interface UseDesignGenerationReturn {
   generating: boolean;
@@ -18,7 +28,8 @@ interface UseDesignGenerationReturn {
     style: DesignStyle,
     originalImagePath: string,
     targetItems?: TargetItem[],
-    preservedItems?: PreservedItem[]
+    preservedItems?: PreservedItem[],
+    scenarioOptions?: ScenarioOptions
   ) => Promise<GenerateRoomDesignResponse | null>;
 }
 
@@ -31,7 +42,8 @@ export function useDesignGeneration(): UseDesignGenerationReturn {
       style: DesignStyle,
       originalImagePath: string,
       targetItems?: TargetItem[],
-      preservedItems?: PreservedItem[]
+      preservedItems?: PreservedItem[],
+      scenarioOptions?: ScenarioOptions
     ): Promise<GenerateRoomDesignResponse | null> => {
       setGenerating(true);
       setError(null);
@@ -47,6 +59,11 @@ export function useDesignGeneration(): UseDesignGenerationReturn {
           originalImagePath,
           targetItems: targetItems || [],
           preservedItems: preservedItems || [],
+          // 新しいシナリオパラメータ
+          scenario: scenarioOptions?.scenario,
+          roomType: scenarioOptions?.roomType,
+          addItems: scenarioOptions?.addItems,
+          keepItems: scenarioOptions?.keepItems,
         });
 
         return result.data;

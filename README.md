@@ -1,4 +1,4 @@
-# Vibe Interior - AIインテリアコーディネーター
+# 部屋づくりAI - AIインテリアコーディネーター
 
 <div align="center">
 
@@ -9,11 +9,13 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
 
+🌐 **https://room-setup.com**
+
 </div>
 
 ## 📖 概要
 
-Vibe Interiorは、ユーザーが部屋の画像をアップロードするだけで、AIが実在する家具（楽天/Amazon）を配置した改装イメージを自動生成し、そのまま購入できるリンクを提案するWebサービスです。
+部屋づくりAIは、ユーザーが部屋の画像をアップロードするだけで、AIが実在する家具（楽天/Amazon）を配置した改装イメージを自動生成し、そのまま購入できるリンクを提案するWebサービスです。
 
 ### 主な機能
 
@@ -131,7 +133,7 @@ MIT
 
 ## 👥 作成者
 
-Vibe Interior Development Team
+部屋づくりAI Development Team
 
 ---
 

@@ -15,8 +15,12 @@ export interface GenerationOptions {
   style?: string; // "modern", "scandinavian", "traditional"など
   roomType?: string; // "living_room", "bedroom", "kitchen"など
   furnitureCount?: number; // 配置する家具の数
-  targetItems?: string[]; // 変更・追加したいアイテム
-  preservedItems?: string[]; // 維持したいアイテム
+  targetItems?: string[]; // 変更・追加したいアイテム (legacy)
+  preservedItems?: string[]; // 維持したいアイテム (legacy)
+  // 新しいシナリオパラメータ
+  scenario?: string; // "redecorate" | "moving"
+  addItems?: string[]; // 追加/購入したいアイテムカテゴリ
+  keepItems?: string[]; // 残したいアイテムカテゴリ（模様替えシナリオ用）
 }
 
 export interface GeneratedImage {

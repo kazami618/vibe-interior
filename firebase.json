@@ -8,6 +8,30 @@
     ],
     "rewrites": [
       {
+        "source": "/design/new",
+        "destination": "/design/new.html"
+      },
+      {
+        "source": "/design/new/**",
+        "destination": "/design/new.html"
+      },
+      {
+        "source": "/design",
+        "destination": "/design.html"
+      },
+      {
+        "source": "/design/**",
+        "destination": "/design.html"
+      },
+      {
+        "source": "/mypage",
+        "destination": "/mypage.html"
+      },
+      {
+        "source": "/mypage/**",
+        "destination": "/mypage.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

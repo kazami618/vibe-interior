@@ -20,12 +20,23 @@ type TargetItem = "lighting" | "rug" | "cushion" | "wall_decor" | "plants" | "sm
 // 維持対象アイテムの型定義
 type PreservedItem = "walls_ceiling" | "flooring" | "windows" | "large_furniture" | "doors";
 
+// シナリオの型定義
+type Scenario = "redecorate" | "moving";
+
+// 部屋タイプの型定義
+type RoomType = "living" | "dining" | "bedroom" | "one_room";
+
 // リクエスト型定義
 interface GenerateRoomDesignRequest {
   style: DesignStyle;
   originalImagePath: string;
   targetItems?: TargetItem[];
   preservedItems?: PreservedItem[];
+  // 新しいシナリオパラメータ
+  scenario?: Scenario;
+  roomType?: RoomType;
+  addItems?: string[];
+  keepItems?: string[];
 }
 
 // レスポンス型定義
@@ -43,6 +54,12 @@ const VALID_TARGET_ITEMS: TargetItem[] = ["lighting", "rug", "cushion", "wall_de
 // 有効な維持対象アイテムリスト
 const VALID_PRESERVED_ITEMS: PreservedItem[] = ["walls_ceiling", "flooring", "windows", "large_furniture", "doors"];
 
+// 有効なシナリオリスト
+const VALID_SCENARIOS: Scenario[] = ["redecorate", "moving"];
+
+// 有効な部屋タイプリスト
+const VALID_ROOM_TYPES: RoomType[] = ["living", "dining", "bedroom", "one_room"];
+
 // デフォルト値
 const DEFAULT_TARGET_ITEMS: TargetItem[] = ["lighting", "rug", "cushion", "wall_decor", "plants", "small_furniture", "curtain"];
 const DEFAULT_PRESERVED_ITEMS: PreservedItem[] = ["walls_ceiling", "flooring", "windows"];
@@ -55,7 +72,7 @@ function validateInput(data: unknown): GenerateRoomDesignRequest {
     throw new HttpsError("invalid-argument", "入力データが不正です");
   }
 
-  const { style, originalImagePath, targetItems, preservedItems } = data as Record<string, unknown>;
+  const { style, originalImagePath, targetItems, preservedItems, scenario, roomType, addItems, keepItems } = data as Record<string, unknown>;
 
   if (!style || typeof style !== "string" || !VALID_STYLES.includes(style as DesignStyle)) {
     throw new HttpsError("invalid-argument", "無効なスタイルが指定されました");
@@ -97,11 +114,51 @@ function validateInput(data: unknown): GenerateRoomDesignRequest {
     validatedPreservedItems = preservedItems as PreservedItem[];
   }
 
+  // scenarioのバリデーション（オプション）
+  let validatedScenario: Scenario | undefined;
+  if (scenario !== undefined) {
+    if (typeof scenario !== "string" || !VALID_SCENARIOS.includes(scenario as Scenario)) {
+      throw new HttpsError("invalid-argument", "無効なシナリオが指定されました");
+    }
+    validatedScenario = scenario as Scenario;
+  }
+
+  // roomTypeのバリデーション（オプション）
+  let validatedRoomType: RoomType | undefined;
+  if (roomType !== undefined) {
+    if (typeof roomType !== "string" || !VALID_ROOM_TYPES.includes(roomType as RoomType)) {
+      throw new HttpsError("invalid-argument", "無効な部屋タイプが指定されました");
+    }
+    validatedRoomType = roomType as RoomType;
+  }
+
+  // addItemsのバリデーション（オプション、文字列配列）
+  let validatedAddItems: string[] | undefined;
+  if (addItems !== undefined) {
+    if (!Array.isArray(addItems)) {
+      throw new HttpsError("invalid-argument", "addItemsは配列である必要があります");
+    }
+    validatedAddItems = addItems as string[];
+  }
+
+  // keepItemsのバリデーション（オプション、文字列配列）
+  let validatedKeepItems: string[] | undefined;
+  if (keepItems !== undefined) {
+    if (!Array.isArray(keepItems)) {
+      throw new HttpsError("invalid-argument", "keepItemsは配列である必要があります");
+    }
+    validatedKeepItems = keepItems as string[];
+  }
+
   return {
     style: style as DesignStyle,
     originalImagePath,
     targetItems: validatedTargetItems,
     preservedItems: validatedPreservedItems,
+    scenario: validatedScenario,
+    roomType: validatedRoomType,
+    addItems: validatedAddItems,
+    keepItems: validatedKeepItems,
   };
 }
 
@@ -167,7 +224,7 @@ export const generateRoomDesign = onCall<GenerateRoomDesignRequest, Promise<Gene
     functions.logger.info(`generateRoomDesign called by user: ${uid}`);
 
     // 2. 入力バリデーション
-    const { style, originalImagePath, targetItems, preservedItems } = validateInput(request.data);
+    const { style, originalImagePath, targetItems, preservedItems, scenario, roomType, addItems, keepItems } = validateInput(request.data);
 
     // パスに含まれるuidとリクエストのuidが一致するか確認
     const pathUid = originalImagePath.split("/")[1];
@@ -222,6 +279,11 @@ export const generateRoomDesign = onCall<GenerateRoomDesignRequest, Promise<Gene
           style,
           targetItems,
           preservedItems,
+          // 新しいシナリオパラメータ
+          scenario,
+          roomType,
+          addItems,
+          keepItems,
         },
       });
 

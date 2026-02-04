@@ -1,17 +1,17 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'AIコーディネート | Vibe Interior',
+  title: 'AIコーディネート | 部屋づくりAI',
   description: 'AIが部屋をコーディネートしました。実在する家具を使った理想のインテリアデザインをご覧ください。',
   openGraph: {
-    title: 'AIコーディネート - Vibe Interior',
+    title: 'AIコーディネート - 部屋づくりAI',
     description: 'AIが部屋をコーディネートしました。実在する家具を使った理想のインテリアデザインをご覧ください。',
     type: 'article',
-    siteName: 'Vibe Interior',
+    siteName: '部屋づくりAI',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AIコーディネート - Vibe Interior',
+    title: 'AIコーディネート - 部屋づくりAI',
     description: 'AIが部屋をコーディネートしました',
   },
 };

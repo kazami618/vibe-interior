@@ -1,14 +1,20 @@
-# Vibe Interior - AI インテリアコーディネーター
+# 部屋づくりAI - AI インテリアコーディネーター
 
 ## プロジェクト概要
 ユーザーが部屋の画像をアップロードすると、AIが実在する家具（楽天/Amazon）を配置した改装イメージを生成し、購入リンクを提案するWebサービスのMVP。
+
+## 環境
+- **本番環境**: https://room-setup.com (Firebase Hosting)
+- **開発環境**: http://localhost:3000
+
+**重要**: 開発・テストは開発環境(localhost:3000)で行い、本番環境へのデプロイは明示的な指示があった場合のみ実行すること。
 
 ## 技術スタック
 - **Frontend**: Next.js 15 (App Router, TypeScript)
 - **UI**: Shadcn/UI, Tailwind CSS (Dark mode default)
 - **Backend**: Firebase (Firestore, Auth, Storage, Functions)
 - **AI Logic**: Firebase Genkit
-- **Deploy**: Firebase Hosting
+- **Deploy**: Firebase Hosting (room-setup.com)
 
 ## プロジェクト構造
 ```
@@ -41,6 +47,14 @@ vibe-interior/
 2. **アダプターパターン**: AIモデルは `functions/src/ai/adapters/` で抽象化
 3. **型安全性**: TypeScriptの厳格なモードを使用
 4. **ダークモード**: UIはデフォルトでダークモード
+
+## GitHub Issue管理
+- **リポジトリ**: kazami618/vibe-interior
+- **プロジェクト**: Vibe Interior (ID: 1)
+- **Priority・Sizeの設定**: ラベルではなく、GitHub Projectのフィールドを使用する
+  - Priority: P0, P1, P2
+  - Size: XS, S, M, L, XL
+- Issue作成後は必ずプロジェクトに追加し、Priority・Sizeフィールドを設定すること
 
 ## セットアップ
 ```bash

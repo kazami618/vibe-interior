@@ -4,7 +4,7 @@ import { AuthProvider } from "@/lib/auth";
 import { Header } from "@/components/layout/Header";
 
 export const metadata: Metadata = {
-  title: "Vibe Interior - AIインテリアコーディネーター",
+  title: "部屋づくりAI - AIインテリアコーディネーター",
   description: "AIが実在する家具を配置した改装イメージを生成し、購入リンクを提案します",
 };
 
@@ -15,6 +15,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
+      <head>
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7104935288513133"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body className="antialiased">
         <AuthProvider>
           <Header />

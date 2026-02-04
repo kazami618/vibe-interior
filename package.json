@@ -15,12 +15,15 @@
     "deploy": "npm run build && firebase deploy",
     "db:sync": "tsx scripts/sync-products.ts",
     "fetch:rakuten": "tsx scripts/fetch-rakuten.ts",
+    "fetch:rakuten:bulk": "tsx scripts/fetch-rakuten-bulk.ts",
+    "fetch:rakuten:additional": "tsx scripts/fetch-rakuten-additional.ts",
     "db:sync-to-sheet": "tsx scripts/sync-to-spreadsheet.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-slot": "^1.2.4",
     "@tailwindcss/postcss": "^4.1.18",

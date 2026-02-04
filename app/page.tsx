@@ -127,27 +127,23 @@ export default function HomePage() {
                 実在する家具を使った理想のインテリアを提案します。
                 スタイルやアイテムを選んであなた好みのお部屋にコーディネートします。
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-4">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-4 relative z-10">
                 {user ? (
-                  <Button
-                    asChild
-                    size="lg"
-                    className="text-lg px-10 py-6 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/40 transition-all hover:scale-105"
+                  <Link
+                    href="/design/new"
+                    className="inline-flex items-center justify-center text-lg px-10 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/40 transition-all hover:scale-105 text-white font-medium rounded-md"
                   >
-                    <Link href="/design/new">
-                      <Wand2 className="h-5 w-5 mr-2" />
-                      コーディネートを始める
-                    </Link>
-                  </Button>
+                    <Wand2 className="h-5 w-5 mr-2" />
+                    コーディネートを始める
+                  </Link>
                 ) : (
-                  <Button
+                  <button
                     onClick={signInWithGoogle}
-                    size="lg"
-                    className="text-lg px-10 py-6 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/40 transition-all hover:scale-105"
+                    className="inline-flex items-center justify-center text-lg px-10 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/40 transition-all hover:scale-105 text-white font-medium rounded-md"
                   >
                     無料で始める
                     <ArrowRight className="h-5 w-5 ml-2" />
-                  </Button>
+                  </button>
                 )}
               </div>
             </div>
@@ -210,8 +206,8 @@ export default function HomePage() {
                 </div>
 
                 {/* 装飾 */}
-                <div className="absolute -top-4 -right-4 w-24 h-24 bg-primary/20 rounded-full blur-2xl" />
-                <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-primary/10 rounded-full blur-2xl" />
+                <div className="absolute -top-4 -right-4 w-24 h-24 bg-primary/20 rounded-full blur-2xl pointer-events-none" />
+                <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
               </div>
             </div>
           </div>

@@ -167,27 +167,48 @@ export class NanoBananaProAdapter implements ImageGenerationAdapter {
   ): string {
     const style = this.getStyleDescription(options?.style || "modern");
     const roomType = this.getRoomTypeDescription(options?.roomType || "living_room");
-    const targetItems = options?.targetItems || [];
+    const scenario = options?.scenario || "redecorate";
+
+    // 新しいシナリオパラメータを優先、フォールバックとして旧パラメータを使用
+    const addItems = options?.addItems || options?.targetItems || [];
+    const keepItems = options?.keepItems || [];
     const preservedItems = options?.preservedItems || [];
 
+    // シナリオに応じたコンテキストを生成
+    const scenarioContext = this.getScenarioContext(scenario);
+
     // 変更対象アイテムの説明を生成
-    const targetItemDescriptions = this.getTargetItemDescriptions(targetItems);
+    const addItemDescriptions = this.getItemCategoryDescriptions(addItems);
+    const keepItemDescriptions = this.getItemCategoryDescriptions(keepItems);
     const preservedItemDescriptions = this.getPreservedItemDescriptions(preservedItems);
 
-    let prompt = `You are a professional interior designer specializing in rental apartment styling.
-Your task is to generate a renovated interior image that ONLY modifies specific items while STRICTLY preserving others.
+    let prompt = `You are a professional interior designer specializing in ${scenarioContext.specialty}.
+Your task is to ${scenarioContext.task}.
 
 ## Room Information
 - Room type: ${roomType}
 - Target style: ${style}
+- Scenario: ${scenarioContext.description}
 
 ## CRITICAL INSTRUCTIONS - MUST FOLLOW
 
-### Items to ADD or CHANGE (modify these freely):
-${targetItemDescriptions.length > 0 ? targetItemDescriptions.map(item => `- ${item}`).join('\n') : '- None specified'}
+### Items to ADD (place these items in the room):
+${addItemDescriptions.length > 0 ? addItemDescriptions.map(item => `- ${item}`).join('\n') : '- None specified'}
+`;
 
-### Items to STRICTLY PRESERVE (DO NOT modify these at all):
-${preservedItemDescriptions.length > 0 ? preservedItemDescriptions.map(item => `- ${item}`).join('\n') : '- None specified'}
+    if (scenario === "redecorate" && keepItemDescriptions.length > 0) {
+      prompt += `
+### Items to KEEP (preserve these existing items):
+${keepItemDescriptions.map(item => `- ${item}`).join('\n')}
+`;
+    }
+
+    prompt += `
+### Structural Elements to STRICTLY PRESERVE (DO NOT modify):
+${preservedItemDescriptions.length > 0 ? preservedItemDescriptions.map(item => `- ${item}`).join('\n') : `- Walls and ceiling (EXACT same color, texture, and material)
+- Flooring (EXACT same material, color, and pattern)
+- Windows and window frames
+- Doors and door frames`}
 
 ## Important Rules:
 1. This is for a RENTAL apartment - structural changes are NOT allowed
@@ -195,11 +216,17 @@ ${preservedItemDescriptions.length > 0 ? preservedItemDescriptions.map(item => `
 3. Keep the EXACT same flooring material and color
 4. Keep the EXACT same windows, window frames, and their positions
 5. Keep the EXACT same doors and door frames
-6. Only add/change the items listed in "Items to ADD or CHANGE"
-7. The preserved items must look IDENTICAL to the original image
+6. Only add/change the items listed in "Items to ADD"
+${scenario === "redecorate" ? "7. Keep the items listed in \"Items to KEEP\" - they should remain in the room" : ""}
 8. Maintain the same room dimensions, perspective, and lighting direction
 9. **CRITICAL: The output image MUST have the EXACT same aspect ratio as the input room image**
-10. **CRITICAL: Only ONE ceiling light (pendant or ceiling fixture) per room - never add multiple ceiling lights**
+
+## CRITICAL LIGHTING RULE - MUST FOLLOW:
+- **ONLY ONE ceiling light fixture is allowed per room** - this means ONE pendant light OR ONE ceiling light, NOT both
+- If the furniture list includes a ceiling light, place ONLY that ONE ceiling light
+- Do NOT add any additional ceiling lights, pendant lights, or chandeliers
+- Floor lamps, table lamps, and wall sconces are allowed in addition to the single ceiling light
+- If the original room has multiple ceiling lights, replace them with JUST ONE ceiling light from the furniture list
 
 ## Style Guidelines for ${style}:
 ${this.getStyleGuidelines(options?.style || "modern")}
@@ -235,6 +262,33 @@ Do NOT create generic or different furniture. Copy the visual appearance of each
     }
 
     return prompt;
+  }
+
+  /**
+   * シナリオに応じたコンテキストを取得
+   */
+  private getScenarioContext(scenario: string): { specialty: string; task: string; description: string } {
+    const contexts: Record<string, { specialty: string; task: string; description: string }> = {
+      redecorate: {
+        specialty: "room makeovers and redecoration",
+        task: "generate a redecorated room image that adds new items while keeping existing furniture the user wants to preserve",
+        description: "Room redecoration - refreshing the space with new items while keeping some existing furniture",
+      },
+      moving: {
+        specialty: "new home styling and furniture coordination",
+        task: "generate a fully furnished room image for a new home, placing all selected furniture items",
+        description: "Moving to a new home - furnishing an empty or nearly empty space with all new items",
+      },
+    };
+    return contexts[scenario] || contexts.redecorate;
+  }
+
+  /**
+   * アイテムカテゴリの説明を取得（新形式）
+   */
+  private getItemCategoryDescriptions(items: string[]): string[] {
+    // 日本語カテゴリ名をそのまま使用（AI理解可能）
+    return items.filter(Boolean);
   }
 
   /**
@@ -314,8 +368,13 @@ Do NOT create generic or different furniture. Copy the visual appearance of each
    */
   private getRoomTypeDescription(roomType: string): string {
     const roomTypeDescriptions: Record<string, string> = {
-      living_room: "Living room",
+      // 新しい部屋タイプ
+      living: "Living room",
+      dining: "Dining room",
       bedroom: "Bedroom",
+      one_room: "One-room apartment (studio)",
+      // 旧形式（後方互換性）
+      living_room: "Living room",
       kitchen: "Kitchen",
       dining_room: "Dining room",
       office: "Home office",
