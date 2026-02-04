@@ -8,7 +8,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Ticket, LogOut, User, Plus, Home } from 'lucide-react';
@@ -24,7 +23,7 @@ export function Header() {
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
             <Home className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span className="text-xl font-bold text-foreground">Vibe Interior</span>
+          <span className="text-xl font-bold text-foreground">部屋づくりAI</span>
         </Link>
 
         {/* Navigation & Auth Section */}
@@ -49,6 +48,14 @@ export function Header() {
                 </span>
               </div>
 
+              {/* マイページボタン */}
+              <Button asChild variant="ghost" size="sm" className="hidden sm:flex">
+                <Link href="/mypage">
+                  <User className="h-4 w-4 mr-1" />
+                  マイページ
+                </Link>
+              </Button>
+
               {/* ユーザーメニュー */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -68,26 +75,23 @@ export function Header() {
                     )}
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <div className="px-2 py-1.5">
-                    <p className="text-sm font-medium">{userData.displayName}</p>
-                    <p className="text-xs text-muted-foreground">{userData.email}</p>
+                <DropdownMenuContent align="end" className="w-48 border shadow-xl z-50" style={{ backgroundColor: 'white' }}>
+                  {/* モバイル用リンク（PC版では非表示） */}
+                  <div className="sm:hidden">
+                    <DropdownMenuItem asChild>
+                      <Link href="/mypage" className="cursor-pointer flex items-center">
+                        <User className="h-4 w-4 mr-2" />
+                        マイページ
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/design/new" className="cursor-pointer flex items-center">
+                        <Plus className="h-4 w-4 mr-2" />
+                        新規作成
+                      </Link>
+                    </DropdownMenuItem>
                   </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/mypage" className="cursor-pointer">
-                      <User className="h-4 w-4 mr-2" />
-                      マイページ
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="sm:hidden">
-                    <Link href="/design/new" className="cursor-pointer">
-                      <Plus className="h-4 w-4 mr-2" />
-                      新規作成
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={signOut} className="cursor-pointer text-destructive">
+                  <DropdownMenuItem onClick={signOut} className="cursor-pointer text-red-600 dark:text-red-400 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950">
                     <LogOut className="h-4 w-4 mr-2" />
                     ログアウト
                   </DropdownMenuItem>

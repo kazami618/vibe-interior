@@ -44,6 +44,7 @@ interface FurnitureItem {
   position?: { x: number; y: number };
   reviewAverage?: number;
   reviewCount?: number;
+  source?: 'rakuten' | 'amazon';
 }
 
 export default function DesignResultClient() {
@@ -597,20 +598,17 @@ export default function DesignResultClient() {
                                 </span>
                               )}
                             </div>
-                            <span className="text-xs text-muted-foreground flex items-center gap-1 group-hover:text-primary transition-colors">
-                              詳細を見る
+                            <span className={`text-xs font-medium flex items-center gap-1 px-2 py-1 rounded transition-all ${
+                              item.source === 'amazon'
+                                ? 'bg-[#FF9900] text-white hover:bg-[#E88B00]'
+                                : 'bg-[#BF0000] text-white hover:bg-[#A00000]'
+                            }`}>
+                              {item.source === 'amazon' ? 'Amazonで見る' : '楽天市場で見る'}
                               <ExternalLink className="h-3 w-3" />
                             </span>
                           </div>
                         </div>
                       </div>
-                      {item.reason && (
-                        <div className="px-3 pb-3">
-                          <p className="text-xs text-amber-600 font-medium">
-                            {item.reason}
-                          </p>
-                        </div>
-                      )}
                     </Card>
                   </a>
                 </div>

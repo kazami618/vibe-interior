@@ -1,9 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { collection, query, orderBy, limit, getDocs, where } from 'firebase/firestore';
-import { ref, getDownloadURL } from 'firebase/storage';
 import {
   Upload,
   Palette,
@@ -13,160 +11,98 @@ import {
   Camera,
   Wand2,
   Home,
-  Sofa,
   Lamp,
-  Frame
+  Frame,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 import { useAuth } from '@/lib/auth';
-import { db, storage } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
-interface RecentDesign {
-  id: string;
-  generatedImageUrl: string;
-  style?: string;
-}
+// 固定のBefore/Afterサンプル（スタイル画像を使用）
+const HERO_SAMPLES = [
+  {
+    id: 'scandinavian',
+    style: '北欧',
+    afterImageUrl: '/styles/scandinavian.jpg',
+  },
+  {
+    id: 'modern',
+    style: 'モダン',
+    afterImageUrl: '/styles/modern.jpg',
+  },
+  {
+    id: 'vintage',
+    style: 'ヴィンテージ',
+    afterImageUrl: '/styles/vintage.jpg',
+  },
+  {
+    id: 'industrial',
+    style: 'インダストリアル',
+    afterImageUrl: '/styles/industrial.jpg',
+  },
+];
 
-interface SampleDesign {
-  id: string;
-  originalImageUrl: string;
-  generatedImageUrl: string;
-  style?: string;
-}
-
-interface StyleImage {
-  style: string;
-  imageUrl: string | null;
-}
+// スタイル情報（静的画像を使用）
+const STYLES = [
+  {
+    key: 'scandinavian',
+    name: '北欧',
+    sub: 'Scandinavian',
+    desc: 'シンプルで温かみのある',
+    imageUrl: '/styles/scandinavian.jpg',
+  },
+  {
+    key: 'modern',
+    name: 'モダン',
+    sub: 'Modern',
+    desc: '洗練されたミニマル',
+    imageUrl: '/styles/modern.jpg',
+  },
+  {
+    key: 'vintage',
+    name: 'ヴィンテージ',
+    sub: 'Vintage',
+    desc: 'レトロな魅力',
+    imageUrl: '/styles/vintage.jpg',
+  },
+  {
+    key: 'industrial',
+    name: 'インダストリアル',
+    sub: 'Industrial',
+    desc: '無骨でクール',
+    imageUrl: '/styles/industrial.jpg',
+  },
+];
 
 export default function HomePage() {
   const { user, signInWithGoogle } = useAuth();
-  const [recentDesigns, setRecentDesigns] = useState<RecentDesign[]>([]);
-  const [sampleDesigns, setSampleDesigns] = useState<SampleDesign[]>([]);
-  const [styleImages, setStyleImages] = useState<Record<string, string | null>>({});
-  const [activeBeforeAfter, setActiveBeforeAfter] = useState(0);
-
-  // サンプルデザインを取得（トップページ表示用）
-  useEffect(() => {
-    const fetchSampleDesigns = async () => {
-      try {
-        const designsRef = collection(db, 'designs');
-        const q = query(
-          designsRef,
-          where('status', '==', 'completed'),
-          orderBy('createdAt', 'desc'),
-          limit(8)
-        );
-        const snapshot = await getDocs(q);
-
-        const items: SampleDesign[] = [];
-
-        for (const doc of snapshot.docs) {
-          const data = doc.data();
-
-          // 生成画像URLが必須
-          if (!data.generatedImageUrl) continue;
-
-          let originalUrl = data.originalImageUrl;
-
-          // Storage パスの場合はダウンロードURLを取得（認証済みの場合のみ）
-          if (originalUrl && !originalUrl.startsWith('http')) {
-            try {
-              const imageRef = ref(storage, originalUrl);
-              originalUrl = await getDownloadURL(imageRef);
-            } catch (err) {
-              // 元画像が取得できない場合は生成画像のみ使用
-              originalUrl = data.generatedImageUrl;
-            }
-          }
-
-          items.push({
-            id: doc.id,
-            originalImageUrl: originalUrl || data.generatedImageUrl,
-            generatedImageUrl: data.generatedImageUrl,
-            style: data.generationOptions?.style,
-          });
-        }
-
-        setSampleDesigns(items);
-      } catch (err) {
-        console.error('Error fetching sample designs:', err);
-      }
-    };
-
-    fetchSampleDesigns();
-  }, []);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // サンプル画像の自動切り替え
   useEffect(() => {
-    if (sampleDesigns.length <= 1) return;
     const timer = setInterval(() => {
-      setActiveBeforeAfter((prev) => (prev + 1) % sampleDesigns.length);
-    }, 5000);
+      handleNext();
+    }, 4000);
     return () => clearInterval(timer);
-  }, [sampleDesigns.length]);
+  }, [activeIndex]);
 
-  // スタイル別の代表画像を設定（サンプルデザインから抽出）
-  useEffect(() => {
-    if (sampleDesigns.length === 0) return;
+  const handlePrev = () => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setActiveIndex((prev) => (prev - 1 + HERO_SAMPLES.length) % HERO_SAMPLES.length);
+    setTimeout(() => setIsTransitioning(false), 300);
+  };
 
-    const styles = ['scandinavian', 'modern', 'vintage', 'industrial'];
-    const images: Record<string, string | null> = {};
-
-    for (const style of styles) {
-      const design = sampleDesigns.find((d) => d.style === style);
-      images[style] = design?.generatedImageUrl || null;
-    }
-
-    // スタイル画像がない場合は、サンプルデザインから順番に割り当て
-    let sampleIndex = 0;
-    for (const style of styles) {
-      if (!images[style] && sampleDesigns[sampleIndex]) {
-        images[style] = sampleDesigns[sampleIndex].generatedImageUrl;
-        sampleIndex++;
-      }
-    }
-
-    setStyleImages(images);
-  }, [sampleDesigns]);
-
-  // ログインユーザーの最近のデザインを取得
-  useEffect(() => {
-    if (!user) {
-      setRecentDesigns([]);
-      return;
-    }
-
-    const fetchRecentDesigns = async () => {
-      try {
-        const designsRef = collection(db, 'designs');
-        const q = query(
-          designsRef,
-          where('userId', '==', user.uid),
-          where('status', '==', 'completed'),
-          orderBy('createdAt', 'desc'),
-          limit(6)
-        );
-        const snapshot = await getDocs(q);
-
-        const items = snapshot.docs
-          .map((doc) => ({
-            id: doc.id,
-            generatedImageUrl: doc.data().generatedImageUrl,
-            style: doc.data().generationOptions?.style,
-          }))
-          .filter((item) => item.generatedImageUrl);
-
-        setRecentDesigns(items);
-      } catch (err) {
-        console.error('Error fetching recent designs:', err);
-      }
-    };
-
-    fetchRecentDesigns();
-  }, [user]);
+  const handleNext = () => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setActiveIndex((prev) => (prev + 1) % HERO_SAMPLES.length);
+    setTimeout(() => setIsTransitioning(false), 300);
+  };
 
   return (
     <div className="min-h-screen">
@@ -179,28 +115,36 @@ export default function HomePage() {
             <div className="text-center lg:text-left space-y-6">
               <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium">
                 <Sparkles className="h-4 w-4" />
-                AIがあなたの部屋を素敵にコーディネート
+                写真をアップするだけで簡単に使える
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
-                部屋の写真を
-                <span className="text-primary block">プロのデザイン</span>
-                に変える
+                あなたのお部屋を
+                <span className="text-primary block">プロフェッショナルなAIが</span>
+                コーディネート
               </h1>
               <p className="text-lg text-muted-foreground max-w-xl">
-                Vibe Interiorは、AIが部屋の写真を分析し、
+                部屋づくりAIは、AIが部屋の写真を分析し、
                 実在する家具を使った理想のインテリアを提案します。
-                賃貸でもできるコーディネートで、毎日の暮らしをもっと素敵に。
+                スタイルやアイテムを選んであなた好みのお部屋にコーディネートします。
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-2">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-4">
                 {user ? (
-                  <Button asChild size="lg" className="text-lg px-8">
+                  <Button
+                    asChild
+                    size="lg"
+                    className="text-lg px-10 py-6 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/40 transition-all hover:scale-105"
+                  >
                     <Link href="/design/new">
                       <Wand2 className="h-5 w-5 mr-2" />
                       コーディネートを始める
                     </Link>
                   </Button>
                 ) : (
-                  <Button onClick={signInWithGoogle} size="lg" className="text-lg px-8">
+                  <Button
+                    onClick={signInWithGoogle}
+                    size="lg"
+                    className="text-lg px-10 py-6 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/40 transition-all hover:scale-105"
+                  >
                     無料で始める
                     <ArrowRight className="h-5 w-5 ml-2" />
                   </Button>
@@ -208,117 +152,67 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* 右側：ビフォーアフター画像 */}
+            {/* 右側：スタイルサンプル画像 */}
             <div className="relative">
-              {sampleDesigns.length > 0 ? (
-                <div className="relative">
-                  {/* メインのビフォーアフター表示 */}
-                  <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                    <div className="grid grid-cols-2 gap-1 bg-muted">
-                      {/* Before */}
-                      <div className="relative aspect-[4/3]">
-                        <img
-                          src={sampleDesigns[activeBeforeAfter]?.originalImageUrl}
-                          alt="Before"
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute top-2 left-2 px-2 py-1 rounded bg-black/60 text-white text-xs font-medium">
-                          Before
-                        </div>
-                      </div>
-                      {/* After */}
-                      <div className="relative aspect-[4/3]">
-                        <img
-                          src={sampleDesigns[activeBeforeAfter]?.generatedImageUrl}
-                          alt="After"
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute top-2 right-2 px-2 py-1 rounded bg-primary text-primary-foreground text-xs font-medium">
-                          After
-                        </div>
-                      </div>
-                    </div>
+              <div className="relative">
+                {/* メイン画像表示 */}
+                <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+                  <div className="relative aspect-[4/3]">
+                    {HERO_SAMPLES.map((sample, idx) => (
+                      <img
+                        key={sample.id}
+                        src={sample.afterImageUrl}
+                        alt={`${sample.style}スタイルの部屋`}
+                        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+                          idx === activeIndex ? 'opacity-100' : 'opacity-0'
+                        }`}
+                      />
+                    ))}
                     {/* スタイルバッジ */}
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-white/90 text-sm font-medium shadow">
-                      {getStyleLabel(sampleDesigns[activeBeforeAfter]?.style)}スタイル
+                    <div className="absolute bottom-4 left-4 px-4 py-2 rounded-full bg-white/95 text-sm font-semibold shadow-lg">
+                      {HERO_SAMPLES[activeIndex]?.style}スタイル
                     </div>
+                    {/* ナビゲーションボタン */}
+                    <button
+                      onClick={handlePrev}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 hover:bg-white flex items-center justify-center shadow-lg transition-all"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={handleNext}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 hover:bg-white flex items-center justify-center shadow-lg transition-all"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
                   </div>
-
-                  {/* サムネイル選択 */}
-                  {sampleDesigns.length > 1 && (
-                    <div className="flex justify-center gap-2 mt-4">
-                      {sampleDesigns.slice(0, 4).map((design, idx) => (
-                        <button
-                          key={design.id}
-                          onClick={() => setActiveBeforeAfter(idx)}
-                          className={`w-12 h-12 rounded-lg overflow-hidden border-2 transition-all ${
-                            activeBeforeAfter === idx
-                              ? 'border-primary scale-110'
-                              : 'border-transparent opacity-60 hover:opacity-100'
-                          }`}
-                        >
-                          <img
-                            src={design.generatedImageUrl}
-                            alt=""
-                            className="w-full h-full object-cover"
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* 装飾 */}
-                  <div className="absolute -top-4 -right-4 w-24 h-24 bg-primary/20 rounded-full blur-2xl" />
-                  <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-primary/10 rounded-full blur-2xl" />
                 </div>
-              ) : (
-                /* サンプル画像がない場合：イメージイラスト */
-                <div className="relative">
-                  <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                    <div className="grid grid-cols-2 gap-1 bg-muted">
-                      {/* Before イメージ */}
-                      <div className="relative aspect-[4/3] bg-gradient-to-br from-gray-200 to-gray-300">
-                        <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
-                          <div className="w-16 h-10 bg-gray-400/50 rounded mb-2" />
-                          <div className="w-24 h-6 bg-gray-400/30 rounded mb-4" />
-                          <div className="flex gap-2">
-                            <div className="w-8 h-8 bg-gray-400/40 rounded" />
-                            <div className="w-8 h-8 bg-gray-400/40 rounded" />
-                          </div>
-                        </div>
-                        <div className="absolute top-2 left-2 px-2 py-1 rounded bg-black/60 text-white text-xs font-medium">
-                          Before
-                        </div>
-                      </div>
-                      {/* After イメージ */}
-                      <div className="relative aspect-[4/3] bg-gradient-to-br from-amber-100 to-orange-100">
-                        <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
-                          <div className="w-16 h-10 bg-amber-300/50 rounded mb-2" />
-                          <div className="w-24 h-6 bg-amber-300/30 rounded mb-4" />
-                          <div className="flex gap-2">
-                            <div className="w-8 h-8 bg-green-300/50 rounded" />
-                            <div className="w-8 h-8 bg-amber-300/40 rounded" />
-                            <div className="w-6 h-10 bg-yellow-300/40 rounded" />
-                          </div>
-                        </div>
-                        <div className="absolute top-2 right-2 px-2 py-1 rounded bg-primary text-primary-foreground text-xs font-medium">
-                          After
-                        </div>
-                        <Sparkles className="absolute bottom-4 right-4 w-6 h-6 text-primary/60" />
-                      </div>
-                    </div>
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-white/90 text-sm font-medium shadow">
-                      AIがコーディネート
-                    </div>
-                  </div>
-                  <p className="text-center text-sm text-muted-foreground mt-4">
-                    あなたの部屋もこんな風に変わります
-                  </p>
-                  {/* 装飾 */}
-                  <div className="absolute -top-4 -right-4 w-24 h-24 bg-primary/20 rounded-full blur-2xl" />
-                  <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-primary/10 rounded-full blur-2xl" />
+
+                {/* サムネイル選択 */}
+                <div className="flex justify-center gap-2 mt-4">
+                  {HERO_SAMPLES.map((sample, idx) => (
+                    <button
+                      key={sample.id}
+                      onClick={() => setActiveIndex(idx)}
+                      className={`w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
+                        activeIndex === idx
+                          ? 'border-primary scale-110 shadow-lg'
+                          : 'border-transparent opacity-70 hover:opacity-100'
+                      }`}
+                    >
+                      <img
+                        src={sample.afterImageUrl}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
                 </div>
-              )}
+
+                {/* 装飾 */}
+                <div className="absolute -top-4 -right-4 w-24 h-24 bg-primary/20 rounded-full blur-2xl" />
+                <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-primary/10 rounded-full blur-2xl" />
+              </div>
             </div>
           </div>
         </div>
@@ -373,71 +267,39 @@ export default function HomePage() {
               </p>
             </div>
           </div>
+
+          {/* セクション下部のCTA */}
+          <div className="text-center mt-12">
+            {user ? (
+              <Button
+                asChild
+                size="lg"
+                className="text-lg px-8 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-lg shadow-emerald-500/25"
+              >
+                <Link href="/design/new">
+                  <Wand2 className="h-5 w-5 mr-2" />
+                  コーディネートを始める
+                </Link>
+              </Button>
+            ) : (
+              <Button
+                onClick={signInWithGoogle}
+                size="lg"
+                className="text-lg px-8 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-lg shadow-emerald-500/25"
+              >
+                無料で始める
+                <ArrowRight className="h-5 w-5 ml-2" />
+              </Button>
+            )}
+          </div>
         </div>
       </section>
 
-      {/* Sample Gallery Section */}
-      {sampleDesigns.length > 0 && (
-        <section className="py-16 bg-secondary/30">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-10">
-              <h2 className="text-3xl font-bold mb-4">みんなのコーディネート</h2>
-              <p className="text-muted-foreground">
-                AIが生成した実際のコーディネート例をご覧ください
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
-              {sampleDesigns.map((design, idx) => (
-                <div
-                  key={design.id}
-                  className="group relative aspect-square rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer"
-                  onClick={() => setActiveBeforeAfter(idx)}
-                >
-                  <img
-                    src={design.generatedImageUrl}
-                    alt={`コーディネート例 ${idx + 1}`}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="absolute bottom-3 left-3 right-3">
-                      <span className="text-white text-sm font-medium">
-                        {getStyleLabel(design.style)}スタイル
-                      </span>
-                    </div>
-                  </div>
-                  {/* Before/Afterバッジ */}
-                  <div className="absolute top-2 right-2 px-2 py-1 rounded bg-primary/90 text-primary-foreground text-xs font-medium">
-                    AI生成
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="text-center mt-8">
-              {user ? (
-                <Button asChild variant="outline" size="lg">
-                  <Link href="/design/new">
-                    <Wand2 className="h-4 w-4 mr-2" />
-                    あなたの部屋もコーディネートする
-                  </Link>
-                </Button>
-              ) : (
-                <Button onClick={signInWithGoogle} variant="outline" size="lg">
-                  無料で試してみる
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              )}
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* Features Section */}
-      <section className="py-20 bg-background">
+      <section className="py-20 bg-secondary/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Vibe Interiorの特徴</h2>
+            <h2 className="text-3xl font-bold mb-4">部屋づくりAIの特徴</h2>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
@@ -503,26 +365,18 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-5xl mx-auto">
-            {[
-              { key: 'scandinavian', name: '北欧', sub: 'Scandinavian', desc: 'シンプルで温かみのある', color: 'from-amber-100 to-orange-50' },
-              { key: 'modern', name: 'モダン', sub: 'Modern', desc: '洗練されたミニマル', color: 'from-gray-100 to-slate-50' },
-              { key: 'vintage', name: 'ヴィンテージ', sub: 'Vintage', desc: 'レトロな魅力', color: 'from-amber-200 to-yellow-100' },
-              { key: 'industrial', name: 'インダストリアル', sub: 'Industrial', desc: '無骨でクール', color: 'from-zinc-200 to-stone-100' },
-            ].map((style) => (
-              <Card key={style.key} className="group overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1">
+            {STYLES.map((style) => (
+              <Card
+                key={style.key}
+                className="group overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1"
+              >
                 {/* スタイル画像 */}
                 <div className="aspect-[4/3] overflow-hidden relative">
-                  {styleImages[style.key] ? (
-                    <img
-                      src={styleImages[style.key]!}
-                      alt={`${style.name}スタイルの例`}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className={`w-full h-full bg-gradient-to-br ${style.color} flex items-center justify-center`}>
-                      <Sofa className="h-12 w-12 text-primary/30" />
-                    </div>
-                  )}
+                  <img
+                    src={style.imageUrl}
+                    alt={`${style.name}スタイルの例`}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
                   {/* オーバーレイ */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                   {/* スタイル名（画像上に表示） */}
@@ -541,54 +395,33 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Recent Designs Section */}
-      {recentDesigns.length > 0 && (
-        <section className="py-20 bg-secondary/30">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">あなたの最近のコーディネート</h2>
-              <p className="text-muted-foreground">
-                作成したデザインをもう一度チェック
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-              {recentDesigns.map((design) => (
-                <div
-                  key={design.id}
-                  className="aspect-square rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow"
-                >
-                  <img
-                    src={design.generatedImageUrl}
-                    alt="Generated design"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* CTA Section */}
-      <section className="py-20 bg-primary text-primary-foreground">
+      <section className="py-20 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">
             あなたの部屋も変えてみませんか？
           </h2>
-          <p className="text-primary-foreground/80 mb-8 max-w-xl mx-auto">
+          <p className="text-white/80 mb-8 max-w-xl mx-auto">
             今すぐ無料で始められます。
             写真1枚で、理想のインテリアを見つけましょう。
           </p>
           {user ? (
-            <Button asChild size="lg" variant="secondary" className="text-lg px-8">
+            <Button
+              asChild
+              size="lg"
+              className="text-lg px-10 py-6 bg-white text-emerald-600 hover:bg-gray-100 shadow-xl hover:shadow-2xl transition-all hover:scale-105"
+            >
               <Link href="/design/new">
                 <Wand2 className="h-5 w-5 mr-2" />
                 コーディネートを始める
               </Link>
             </Button>
           ) : (
-            <Button onClick={signInWithGoogle} size="lg" variant="secondary" className="text-lg px-8">
+            <Button
+              onClick={signInWithGoogle}
+              size="lg"
+              className="text-lg px-10 py-6 bg-white text-emerald-600 hover:bg-gray-100 shadow-xl hover:shadow-2xl transition-all hover:scale-105"
+            >
               無料で始める
               <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
@@ -604,24 +437,14 @@ export default function HomePage() {
               <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
                 <Home className="h-3 w-3 text-primary-foreground" />
               </div>
-              <span className="font-semibold">Vibe Interior</span>
+              <span className="font-semibold">部屋づくりAI</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              © 2026 Vibe Interior. All rights reserved.
+              © 2026 部屋づくりAI (room-setup.com). All rights reserved.
             </p>
           </div>
         </div>
       </footer>
     </div>
   );
-}
-
-function getStyleLabel(style?: string): string {
-  const labels: Record<string, string> = {
-    scandinavian: '北欧',
-    modern: 'モダン',
-    vintage: 'ヴィンテージ',
-    industrial: 'インダストリアル',
-  };
-  return labels[style || 'modern'] || style || 'モダン';
 }
