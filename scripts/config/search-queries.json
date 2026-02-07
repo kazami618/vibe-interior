@@ -1,0 +1,179 @@
+{
+  "queries": [
+    {
+      "category": "ソファ",
+      "style": "scandinavian",
+      "searchTerms": ["北欧 ソファ おすすめ 2026", "北欧風ソファ 人気ランキング"]
+    },
+    {
+      "category": "ソファ",
+      "style": "modern",
+      "searchTerms": ["モダン ソファ おすすめ 2026", "シンプル ソファ 人気"]
+    },
+    {
+      "category": "ソファ",
+      "style": "vintage",
+      "searchTerms": ["ヴィンテージ ソファ おすすめ", "レトロ ソファ 人気ランキング"]
+    },
+    {
+      "category": "ソファ",
+      "style": "industrial",
+      "searchTerms": ["インダストリアル ソファ おすすめ", "ブルックリン ソファ レザー"]
+    },
+    {
+      "category": "ベッド",
+      "style": "scandinavian",
+      "searchTerms": ["北欧 ベッドフレーム おすすめ 2026", "北欧風 ベッド 人気"]
+    },
+    {
+      "category": "ベッド",
+      "style": "modern",
+      "searchTerms": ["モダン ベッドフレーム おすすめ", "シンプル ベッド おしゃれ 2026"]
+    },
+    {
+      "category": "テーブル",
+      "style": "scandinavian",
+      "searchTerms": ["北欧 ローテーブル おすすめ 2026", "北欧風 センターテーブル 人気"]
+    },
+    {
+      "category": "テーブル",
+      "style": "modern",
+      "searchTerms": ["モダン テーブル おすすめ", "シンプル ローテーブル 人気ランキング"]
+    },
+    {
+      "category": "テーブル",
+      "style": "vintage",
+      "searchTerms": ["ヴィンテージ テーブル おすすめ", "アンティーク ローテーブル"]
+    },
+    {
+      "category": "テーブル",
+      "style": "industrial",
+      "searchTerms": ["インダストリアル テーブル おすすめ", "アイアン テーブル 人気"]
+    },
+    {
+      "category": "照明",
+      "style": "scandinavian",
+      "searchTerms": ["北欧 ペンダントライト おすすめ 2026", "北欧風 照明 人気ランキング"]
+    },
+    {
+      "category": "照明",
+      "style": "modern",
+      "searchTerms": ["モダン 照明 おすすめ 2026", "おしゃれ シーリングライト 人気"]
+    },
+    {
+      "category": "照明",
+      "style": "vintage",
+      "searchTerms": ["ヴィンテージ 照明 おすすめ", "レトロ ペンダントライト 人気"]
+    },
+    {
+      "category": "照明",
+      "style": "industrial",
+      "searchTerms": ["インダストリアル 照明 おすすめ", "ブルックリン ペンダントライト"]
+    },
+    {
+      "category": "間接照明",
+      "style": "scandinavian",
+      "searchTerms": ["北欧 間接照明 おすすめ 2026", "北欧風 フロアランプ 人気"]
+    },
+    {
+      "category": "間接照明",
+      "style": "modern",
+      "searchTerms": ["モダン フロアランプ おすすめ", "おしゃれ 間接照明 人気 2026"]
+    },
+    {
+      "category": "ラグ",
+      "style": "scandinavian",
+      "searchTerms": ["北欧 ラグ おすすめ 2026", "北欧風 ラグ 人気ランキング"]
+    },
+    {
+      "category": "ラグ",
+      "style": "modern",
+      "searchTerms": ["モダン ラグ おすすめ", "シンプル ラグ おしゃれ 2026"]
+    },
+    {
+      "category": "ラグ",
+      "style": "vintage",
+      "searchTerms": ["ヴィンテージ ラグ おすすめ", "キリム ラグ おしゃれ"]
+    },
+    {
+      "category": "カーテン",
+      "style": "scandinavian",
+      "searchTerms": ["北欧 カーテン おすすめ 2026", "リネン カーテン 人気"]
+    },
+    {
+      "category": "カーテン",
+      "style": "modern",
+      "searchTerms": ["モダン カーテン おすすめ", "シンプル ドレープカーテン 人気 2026"]
+    },
+    {
+      "category": "観葉植物",
+      "style": "scandinavian",
+      "searchTerms": ["観葉植物 おしゃれ おすすめ 2026", "インテリア 観葉植物 人気ランキング"]
+    },
+    {
+      "category": "観葉植物",
+      "style": "modern",
+      "searchTerms": ["フェイクグリーン おしゃれ おすすめ", "モダン 観葉植物 インテリア 2026"]
+    },
+    {
+      "category": "収納",
+      "style": "scandinavian",
+      "searchTerms": ["北欧 収納 おすすめ 2026", "北欧風 シェルフ 人気ランキング"]
+    },
+    {
+      "category": "収納",
+      "style": "modern",
+      "searchTerms": ["モダン 収納棚 おすすめ", "おしゃれ テレビ台 人気 2026"]
+    },
+    {
+      "category": "収納",
+      "style": "industrial",
+      "searchTerms": ["インダストリアル ラック おすすめ", "ブルックリン 収納 おしゃれ"]
+    },
+    {
+      "category": "クッション",
+      "style": "scandinavian",
+      "searchTerms": ["北欧 クッション おすすめ 2026", "北欧風 クッションカバー 人気"]
+    },
+    {
+      "category": "クッション",
+      "style": "modern",
+      "searchTerms": ["モダン クッション おすすめ", "シンプル クッション おしゃれ 2026"]
+    },
+    {
+      "category": "サイドテーブル",
+      "style": "scandinavian",
+      "searchTerms": ["北欧 サイドテーブル おすすめ 2026", "北欧風 ナイトテーブル 人気"]
+    },
+    {
+      "category": "サイドテーブル",
+      "style": "modern",
+      "searchTerms": ["モダン サイドテーブル おすすめ", "シンプル サイドテーブル 人気 2026"]
+    },
+    {
+      "category": "ミラー",
+      "style": "scandinavian",
+      "searchTerms": ["北欧 ミラー おすすめ 2026", "おしゃれ 壁掛けミラー 人気"]
+    },
+    {
+      "category": "ミラー",
+      "style": "modern",
+      "searchTerms": ["モダン ミラー おすすめ", "スタンドミラー おしゃれ 2026"]
+    },
+    {
+      "category": "壁掛け",
+      "style": "scandinavian",
+      "searchTerms": ["北欧 ウォールアート おすすめ 2026", "北欧 ポスター インテリア 人気"]
+    },
+    {
+      "category": "壁掛け",
+      "style": "modern",
+      "searchTerms": ["モダン ウォールアート おすすめ", "おしゃれ 壁掛け インテリア 2026"]
+    },
+    {
+      "category": "壁掛け",
+      "style": "vintage",
+      "searchTerms": ["ヴィンテージ 壁掛け インテリア", "アンティーク ウォールデコ おすすめ"]
+    }
+  ]
+}

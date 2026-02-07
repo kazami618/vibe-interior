@@ -11,6 +11,11 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    function isAdmin() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
     // users コレクション
     match /users/{userId} {
       allow read: if isOwner(userId);
@@ -48,10 +53,20 @@ service cloud.firestore {
       }
     }
 
-    // products コレクション（全ユーザーが閲覧可能）
+    // products コレクション（認証済みユーザーは読み取り可、管理者のみ書き込み可）
     match /products/{productId} {
       allow read: if isAuthenticated();
-      allow write: if false; // Cloud Functionsからのみ書き込み可能
+      allow write: if isAdmin();
+    }
+
+    // products_backup コレクション（管理者のみ）
+    match /products_backup/{productId} {
+      allow read, write: if isAdmin();
+    }
+
+    // productReviews コレクション（管理者のみ）
+    match /productReviews/{reviewId} {
+      allow read, write: if isAdmin();
     }
   }
 }

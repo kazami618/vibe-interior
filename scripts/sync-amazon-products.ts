@@ -15,7 +15,7 @@ import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import type { Product, AmazonSpreadsheetRow } from '../lib/types/product';
+import type { LegacyProduct as Product, AmazonSpreadsheetRow } from '../lib/types/product';
 
 // .env.local を読み込み
 config({ path: '.env.local' });

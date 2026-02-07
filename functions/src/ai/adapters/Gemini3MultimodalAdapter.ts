@@ -177,7 +177,7 @@ export class Gemini3MultimodalAdapter implements FurnitureRecommendationAdapter 
       const excludeKeywords = CATEGORY_EXCLUDE_KEYWORDS[targetCategory] || [];
       if (excludeKeywords.length === 0) return false;
 
-      const productText = `${product.name || ""} ${product.category || ""} ${(product.keywords || []).join(" ")}`.toLowerCase();
+      const productText = `${product.name || ""} ${product.category || ""} ${getProductKeywords(product).join(" ")}`.toLowerCase();
       return excludeKeywords.some((kw) => productText.includes(kw.toLowerCase()));
     };
 
@@ -193,7 +193,7 @@ export class Gemini3MultimodalAdapter implements FurnitureRecommendationAdapter 
           if (foundForThisCategory) break;
 
           const snapshot = await productsRef
-            .where("isActive", "==", true)
+            .where("status", "==", "approved")
             .where("category", "==", keyword)
             .limit(20)
             .get();
@@ -214,7 +214,7 @@ export class Gemini3MultimodalAdapter implements FurnitureRecommendationAdapter 
               data.productId = doc.id;
               (data as any).targetCategory = targetItem;
               // カテゴリ完全一致は高スコア
-              const keywords = data.keywords || [];
+              const keywords = getProductKeywords(data);
               const styleMatch = styleKeywords.filter((kw) =>
                 keywords.some((k) => k.includes(kw) || kw.includes(k))
               ).length;
@@ -231,7 +231,7 @@ export class Gemini3MultimodalAdapter implements FurnitureRecommendationAdapter 
             if (foundForThisCategory) break;
 
             const snapshot = await productsRef
-              .where("isActive", "==", true)
+              .where("status", "==", "approved")
               .where("keywords", "array-contains", keyword)
               .limit(30)
               .get();
@@ -257,7 +257,7 @@ export class Gemini3MultimodalAdapter implements FurnitureRecommendationAdapter 
                 const data = doc.data() as ProductData;
                 data.productId = doc.id;
                 (data as any).targetCategory = targetItem;
-                const keywords = data.keywords || [];
+                const keywords = getProductKeywords(data);
                 const styleMatch = styleKeywords.filter((kw) =>
                   keywords.some((k) => k.includes(kw) || kw.includes(k))
                 ).length;
@@ -275,7 +275,7 @@ export class Gemini3MultimodalAdapter implements FurnitureRecommendationAdapter 
             if (foundForThisCategory) break;
 
             const snapshot = await productsRef
-              .where("isActive", "==", true)
+              .where("status", "==", "approved")
               .where("keywords", "array-contains", keyword)
               .limit(20)
               .get();
@@ -295,7 +295,7 @@ export class Gemini3MultimodalAdapter implements FurnitureRecommendationAdapter 
                 const data = doc.data() as ProductData;
                 data.productId = doc.id;
                 (data as any).targetCategory = targetItem;
-                const keywords = data.keywords || [];
+                const keywords = getProductKeywords(data);
                 const styleMatch = styleKeywords.filter((kw) =>
                   keywords.some((k) => k.includes(kw) || kw.includes(k))
                 ).length;
@@ -335,8 +335,10 @@ export class Gemini3MultimodalAdapter implements FurnitureRecommendationAdapter 
             const styleScoreA = (a as any).styleScore || 0;
             const styleScoreB = (b as any).styleScore || 0;
             // レビューがある商品にボーナスを付与（レビュー件数100件以上で+3、10件以上で+2、1件以上で+1）
-            const reviewBonusA = (a.reviewCount || 0) >= 100 ? 3 : (a.reviewCount || 0) >= 10 ? 2 : (a.reviewCount || 0) > 0 ? 1 : 0;
-            const reviewBonusB = (b.reviewCount || 0) >= 100 ? 3 : (b.reviewCount || 0) >= 10 ? 2 : (b.reviewCount || 0) > 0 ? 1 : 0;
+            const reviewCountA = getProductReview(a).count;
+            const reviewCountB = getProductReview(b).count;
+            const reviewBonusA = reviewCountA >= 100 ? 3 : reviewCountA >= 10 ? 2 : reviewCountA > 0 ? 1 : 0;
+            const reviewBonusB = reviewCountB >= 100 ? 3 : reviewCountB >= 10 ? 2 : reviewCountB > 0 ? 1 : 0;
             return (styleScoreB + reviewBonusB) - (styleScoreA + reviewBonusA);
           });
           const bestProduct = categoryProducts[0];
@@ -462,26 +464,26 @@ ${JSON.stringify(productList, null, 2)}
             hasCeilingLight = true;
           }
 
-          // レビュー情報を取得
-          const reviewAverage = product.reviewAverage || 0;
-          const reviewCount = product.reviewCount || 0;
-          const reviewInfo = reviewCount > 0
-            ? `★${reviewAverage.toFixed(1)} (${reviewCount}件のレビュー)`
+          // レビュー情報を取得（新旧スキーマ対応）
+          const review = getProductReview(product);
+          const reviewInfo = review.count > 0
+            ? `★${review.average.toFixed(1)} (${review.count}件のレビュー)`
             : "";
 
           const targetCategory = (product as any).targetCategory || product.category || "";
           coveredCategories.add(targetCategory);
 
+          const productImages = getProductImages(product);
           selectedFurniture.push({
             productId: product.productId,
             name: product.name,
             category: targetCategory,
-            imageUrl: product.imageUrls?.[0] || product.thumbnailUrl || "",
-            affiliateUrl: product.affiliateUrl || "",
+            imageUrl: productImages[0] || "",
+            affiliateUrl: getAffiliateUrl(product),
             price: product.price || 0,
-            reason: reviewInfo, // レビュー情報を表示
-            reviewAverage,
-            reviewCount,
+            reason: reviewInfo,
+            reviewAverage: review.average,
+            reviewCount: review.count,
           });
         }
       }
@@ -519,22 +521,22 @@ ${JSON.stringify(productList, null, 2)}
             }
             if (isCeilingLight) hasCeilingLight = true;
 
-            const reviewAverage = fallbackProduct.reviewAverage || 0;
-            const reviewCount = fallbackProduct.reviewCount || 0;
-            const reviewInfo = reviewCount > 0
-              ? `★${reviewAverage.toFixed(1)} (${reviewCount}件のレビュー)`
+            const fbReview = getProductReview(fallbackProduct);
+            const reviewInfo = fbReview.count > 0
+              ? `★${fbReview.average.toFixed(1)} (${fbReview.count}件のレビュー)`
               : "";
 
+            const fbImages = getProductImages(fallbackProduct);
             selectedFurniture.push({
               productId: fallbackProduct.productId,
               name: fallbackProduct.name,
               category: missingCat,
-              imageUrl: fallbackProduct.imageUrls?.[0] || fallbackProduct.thumbnailUrl || "",
-              affiliateUrl: fallbackProduct.affiliateUrl || "",
+              imageUrl: fbImages[0] || "",
+              affiliateUrl: getAffiliateUrl(fallbackProduct),
               price: fallbackProduct.price || 0,
               reason: reviewInfo,
-              reviewAverage,
-              reviewCount,
+              reviewAverage: fbReview.average,
+              reviewCount: fbReview.count,
             });
             usedProductIds.add(fallbackProduct.productId);
             console.log(`Added fallback product for ${missingCat}: ${fallbackProduct.name} (categoryMatch: ${(fallbackProduct as any).categoryMatch})`);
@@ -592,7 +594,7 @@ ${JSON.stringify(productList, null, 2)}
 
     const name = product.name || "";
     const category = product.category || "";
-    const keywords = product.keywords || [];
+    const keywords = getProductKeywords(product);
     const allText = `${name} ${category} ${keywords.join(" ")}`.toLowerCase();
 
     // 除外キーワードに該当する場合は天井照明ではない
@@ -679,19 +681,19 @@ ${JSON.stringify(productList, null, 2)}
           if (!usedProductIds.has(product.productId)) {
             usedProductIds.add(product.productId);
 
-            // レビュー情報を取得
-            const reviewAverage = (product as any).reviewAverage || 0;
-            const reviewCount = (product as any).reviewCount || 0;
-            const reviewInfo = reviewCount > 0
-              ? `★${reviewAverage.toFixed(1)} (${reviewCount}件のレビュー)`
+            // レビュー情報を取得（新旧スキーマ対応）
+            const matchReview = getProductReview(product);
+            const reviewInfo = matchReview.count > 0
+              ? `★${matchReview.average.toFixed(1)} (${matchReview.count}件のレビュー)`
               : "";
 
+            const matchImages = getProductImages(product);
             matchedProducts.push({
               productId: product.productId,
               name: product.name,
               category: product.category || item.category,
-              imageUrl: product.imageUrls?.[0] || product.thumbnailUrl || "",
-              affiliateUrl: product.affiliateUrl || "",
+              imageUrl: matchImages[0] || "",
+              affiliateUrl: getAffiliateUrl(product),
               price: product.price || 0,
               reason: reviewInfo,
               // @ts-ignore - 番号と位置を追加
@@ -884,7 +886,7 @@ ${JSON.stringify(productList, null, 2)}
     try {
       // カテゴリで検索
       const snapshot = await productsRef
-        .where("isActive", "==", true)
+        .where("status", "==", "approved")
         .where("keywords", "array-contains", searchCategory)
         .limit(10)
         .get();
@@ -895,7 +897,7 @@ ${JSON.stringify(productList, null, 2)}
         data.productId = doc.id;
 
         // スタイルとの一致度でスコアリング
-        const keywords = data.keywords || [];
+        const keywords = getProductKeywords(data);
         const styleMatch = styleKeywords.filter((kw) =>
           keywords.some((k) => k.includes(kw) || kw.includes(k))
         ).length;
@@ -1010,6 +1012,18 @@ ${JSON.stringify(productList, null, 2)}
   }
 }
 
+// 購入リンクの型定義（新スキーマ）
+interface PurchaseLinkData {
+  source: 'amazon' | 'rakuten' | 'official' | 'other';
+  url: string;
+  affiliateUrl?: string;
+  price?: number;
+  asin?: string;
+  rakutenItemCode?: string;
+  reviewAverage?: number;
+  reviewCount?: number;
+}
+
 // 商品データの型定義
 interface ProductData {
   productId: string;
@@ -1018,10 +1032,74 @@ interface ProductData {
   category?: string;
   price?: number;
   imageUrls?: string[];
+  images?: string[]; // 新スキーマ
   thumbnailUrl?: string;
   affiliateUrl?: string;
+  purchaseLinks?: PurchaseLinkData[]; // 新スキーマ
   keywords?: string[];
+  tags?: string[]; // 新スキーマ
   isActive?: boolean;
+  status?: 'candidate' | 'approved' | 'rejected'; // 新スキーマ
   reviewAverage?: number;
   reviewCount?: number;
+}
+
+/**
+ * ProductData からアフィリエイトURLを取得（新旧スキーマ対応）
+ */
+function getAffiliateUrl(product: ProductData): string {
+  // 新スキーマ: purchaseLinks から取得
+  if (product.purchaseLinks?.length) {
+    // Amazon優先、次に楽天
+    const amazonLink = product.purchaseLinks.find(l => l.source === 'amazon');
+    if (amazonLink?.affiliateUrl) return amazonLink.affiliateUrl;
+    const rakutenLink = product.purchaseLinks.find(l => l.source === 'rakuten');
+    if (rakutenLink?.affiliateUrl) return rakutenLink.affiliateUrl;
+    // affiliateUrlがなければurl
+    const firstLink = product.purchaseLinks[0];
+    return firstLink.affiliateUrl || firstLink.url || '';
+  }
+  // 旧スキーマ
+  return product.affiliateUrl || '';
+}
+
+/**
+ * ProductData から画像URLリストを取得（新旧スキーマ対応）
+ */
+function getProductImages(product: ProductData): string[] {
+  if (product.images?.length) return product.images;
+  if (product.imageUrls?.length) return product.imageUrls;
+  if (product.thumbnailUrl) return [product.thumbnailUrl];
+  return [];
+}
+
+/**
+ * ProductData からレビュー情報を取得（新旧スキーマ対応）
+ */
+function getProductReview(product: ProductData): { average: number; count: number } {
+  // 新スキーマ: purchaseLinks から最もレビュー数の多いものを取得
+  if (product.purchaseLinks?.length) {
+    let bestReview = { average: 0, count: 0 };
+    for (const link of product.purchaseLinks) {
+      if ((link.reviewCount || 0) > bestReview.count) {
+        bestReview = {
+          average: link.reviewAverage || 0,
+          count: link.reviewCount || 0,
+        };
+      }
+    }
+    if (bestReview.count > 0) return bestReview;
+  }
+  // 旧スキーマ
+  return {
+    average: product.reviewAverage || 0,
+    count: product.reviewCount || 0,
+  };
+}
+
+/**
+ * ProductData から検索用キーワードを取得（新旧スキーマ対応）
+ */
+function getProductKeywords(product: ProductData): string[] {
+  return product.keywords || product.tags || [];
 }

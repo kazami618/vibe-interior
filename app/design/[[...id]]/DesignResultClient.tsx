@@ -31,6 +31,13 @@ interface FirestoreDesign {
   updatedAt: { toDate: () => Date } | null;
 }
 
+interface PurchaseLinkInfo {
+  source: 'amazon' | 'rakuten' | 'official' | 'other';
+  url: string;
+  affiliateUrl?: string;
+  price?: number;
+}
+
 interface FurnitureItem {
   itemId: string;
   productId: string;
@@ -45,6 +52,7 @@ interface FurnitureItem {
   reviewAverage?: number;
   reviewCount?: number;
   source?: 'rakuten' | 'amazon';
+  purchaseLinks?: PurchaseLinkInfo[];
 }
 
 export default function DesignResultClient() {
@@ -529,14 +537,7 @@ export default function DesignResultClient() {
                     highlightedItemNumber === item.itemNumber ? null : item.itemNumber ?? null
                   )}
                 >
-                  <a
-                    href={item.affiliateUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group block"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Card className={`overflow-hidden transition-all hover:shadow-lg ${
+                  <Card className={`overflow-hidden transition-all hover:shadow-lg ${
                       highlightedItemNumber === item.itemNumber
                         ? 'border-primary shadow-lg'
                         : 'hover:border-primary/50'
@@ -581,7 +582,7 @@ export default function DesignResultClient() {
                               )}
                               {item.category}
                             </p>
-                            <h3 className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">
+                            <h3 className="font-medium text-sm line-clamp-2">
                               {item.name}
                             </h3>
                           </div>
@@ -598,19 +599,46 @@ export default function DesignResultClient() {
                                 </span>
                               )}
                             </div>
-                            <span className={`text-xs font-medium flex items-center gap-1 px-2 py-1 rounded transition-all ${
-                              item.source === 'amazon'
-                                ? 'bg-[#FF9900] text-white hover:bg-[#E88B00]'
-                                : 'bg-[#BF0000] text-white hover:bg-[#A00000]'
-                            }`}>
-                              {item.source === 'amazon' ? 'Amazonで見る' : '楽天市場で見る'}
-                              <ExternalLink className="h-3 w-3" />
-                            </span>
+                            <div className="flex items-center gap-1">
+                              {item.purchaseLinks && item.purchaseLinks.length > 0 ? (
+                                item.purchaseLinks.map((link, idx) => (
+                                  <a
+                                    key={idx}
+                                    href={link.affiliateUrl || link.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className={`text-xs font-medium flex items-center gap-1 px-2 py-1 rounded transition-all ${
+                                      link.source === 'amazon'
+                                        ? 'bg-[#FF9900] text-white hover:bg-[#E88B00]'
+                                        : 'bg-[#BF0000] text-white hover:bg-[#A00000]'
+                                    }`}
+                                  >
+                                    {link.source === 'amazon' ? 'Amazon' : '楽天'}
+                                    <ExternalLink className="h-3 w-3" />
+                                  </a>
+                                ))
+                              ) : (
+                                <a
+                                  href={item.affiliateUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className={`text-xs font-medium flex items-center gap-1 px-2 py-1 rounded transition-all ${
+                                    item.source === 'amazon'
+                                      ? 'bg-[#FF9900] text-white hover:bg-[#E88B00]'
+                                      : 'bg-[#BF0000] text-white hover:bg-[#A00000]'
+                                  }`}
+                                >
+                                  {item.source === 'amazon' ? 'Amazonで見る' : '楽天市場で見る'}
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
                     </Card>
-                  </a>
                 </div>
               ))}
             </div>

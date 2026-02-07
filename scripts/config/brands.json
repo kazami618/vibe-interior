@@ -1,0 +1,104 @@
+{
+  "brands": [
+    {
+      "name": "LOWYA",
+      "defaultStyle": "modern",
+      "categories": ["ソファ", "テーブル", "収納", "ベッド", "チェア", "照明"]
+    },
+    {
+      "name": "ニトリ",
+      "defaultStyle": "modern",
+      "categories": ["ソファ", "ベッド", "テーブル", "収納", "ラグ", "カーテン", "照明"]
+    },
+    {
+      "name": "IKEA",
+      "defaultStyle": "scandinavian",
+      "categories": ["ソファ", "ベッド", "テーブル", "収納", "照明", "ラグ", "ミラー"]
+    },
+    {
+      "name": "無印良品",
+      "defaultStyle": "scandinavian",
+      "categories": ["ソファ", "ベッド", "テーブル", "収納", "照明", "クッション"]
+    },
+    {
+      "name": "ACME Furniture",
+      "defaultStyle": "vintage",
+      "categories": ["ソファ", "テーブル", "チェア", "収納", "照明"]
+    },
+    {
+      "name": "journal standard Furniture",
+      "defaultStyle": "vintage",
+      "categories": ["ソファ", "テーブル", "チェア", "収納", "ラグ"]
+    },
+    {
+      "name": "IDEE",
+      "defaultStyle": "scandinavian",
+      "categories": ["ソファ", "テーブル", "チェア", "照明", "クッション"]
+    },
+    {
+      "name": "unico",
+      "defaultStyle": "scandinavian",
+      "categories": ["ソファ", "テーブル", "チェア", "収納", "ラグ", "カーテン"]
+    },
+    {
+      "name": "FLANNEL SOFA",
+      "defaultStyle": "modern",
+      "categories": ["ソファ", "クッション"]
+    },
+    {
+      "name": "カリモク家具",
+      "defaultStyle": "modern",
+      "categories": ["ソファ", "テーブル", "チェア", "収納", "ベッド"]
+    },
+    {
+      "name": "飛騨産業",
+      "defaultStyle": "scandinavian",
+      "categories": ["テーブル", "チェア", "収納"]
+    },
+    {
+      "name": "マルニ木工",
+      "defaultStyle": "modern",
+      "categories": ["チェア", "テーブル", "ソファ"]
+    },
+    {
+      "name": "天童木工",
+      "defaultStyle": "modern",
+      "categories": ["チェア", "テーブル"]
+    },
+    {
+      "name": "CRASH GATE",
+      "defaultStyle": "vintage",
+      "categories": ["ソファ", "テーブル", "チェア", "収納", "照明"]
+    },
+    {
+      "name": "Francfranc",
+      "defaultStyle": "modern",
+      "categories": ["照明", "クッション", "ラグ", "ミラー", "観葉植物"]
+    },
+    {
+      "name": "arne",
+      "defaultStyle": "modern",
+      "categories": ["ソファ", "テーブル", "収納", "ミラー"]
+    },
+    {
+      "name": "Air Rhizome",
+      "defaultStyle": "scandinavian",
+      "categories": ["ソファ", "テーブル", "チェア", "収納", "照明", "ラグ"]
+    },
+    {
+      "name": "NOCE",
+      "defaultStyle": "modern",
+      "categories": ["ソファ", "テーブル", "チェア", "収納", "照明"]
+    },
+    {
+      "name": "FLYMEe",
+      "defaultStyle": "modern",
+      "categories": ["ソファ", "テーブル", "チェア", "照明", "収納"]
+    },
+    {
+      "name": "ACTUS",
+      "defaultStyle": "scandinavian",
+      "categories": ["ソファ", "テーブル", "チェア", "照明", "ラグ", "クッション"]
+    }
+  ]
+}

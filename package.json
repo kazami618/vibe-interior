@@ -24,7 +24,14 @@
     "amazon:fetch": "tsx scripts/fetch-amazon-keepa.ts",
     "amazon:asins": "tsx scripts/fetch-amazon-asins.ts",
     "amazon:store": "tsx scripts/fetch-store-asins.ts",
-    "amazon:fix": "tsx scripts/fix-amazon-products.ts"
+    "amazon:fix": "tsx scripts/fix-amazon-products.ts",
+    "migrate:products": "tsx scripts/migrate-to-product-model.ts",
+    "admin:set": "tsx scripts/set-admin.ts",
+    "collect:articles": "tsx scripts/collect/from-articles.ts",
+    "collect:brands": "tsx scripts/collect/from-brands.ts",
+    "collect:xref": "tsx scripts/collect/from-rakuten-xref.ts",
+    "collect:merge": "tsx scripts/collect/merge-candidates.ts",
+    "collect:all": "tsx scripts/collect-all.ts"
   },
   "keywords": [],
   "author": "",
